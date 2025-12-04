@@ -1,0 +1,1 @@
+ALTER TABLE "lecture" DROP CONSTRAINT "lecture_name_unique";

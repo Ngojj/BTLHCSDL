@@ -1,0 +1,12 @@
+{
+  "dependencies": {
+    "@hookform/resolvers": "^3.9.1",
+    "@nextui-org/button": "^2.0.38",
+    "@nextui-org/input": "^2.2.5",
+    "@radix-ui/react-slot": "^1.1.0",
+    "axios": "^1.7.7",
+    "react-hook-form": "^7.53.2",
+    "react-hot-toast": "^2.4.1",
+    "zod": "^3.23.8"
+  }
+}

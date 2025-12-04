@@ -1,0 +1,19 @@
+{
+  "dependencies": {
+    "@hookform/resolvers": "^3.9.1",
+    "@nextui-org/button": "^2.0.38",
+    "@nextui-org/input": "^2.2.5",
+    "@radix-ui/react-slot": "^1.1.0",
+    "@vercel/blob": "^0.27.0",
+    "axios": "^1.7.8",
+    "jsonwebtoken": "^9.0.2",
+    "react-hook-form": "^7.53.2",
+    "react-hot-toast": "^2.4.1",
+    "recoil": "^0.7.7",
+    "swiper": "^11.1.15",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.7"
+  }
+}
