@@ -1,13 +1,18 @@
-import { migrate } from  "drizzle-orm/node-postgres/migrator"
-import path from "path"
-import { db } from "../src/db/db"
+import { migrate } from "drizzle-orm/mysql2/migrator";
+import { db } from "../src/db/db";
+import path from "path";
 
-migrate(db, {migrationsFolder: path.resolve("drizzle")})
-.then(() => {
-    console.log("Migrations completed!")
-    process.exit(0)
-})
-.catch((err) => {
-    console.log("migrations fail!", err);
-    process.exit(1)
-})
+async function main() {
+  try {
+    await migrate(db, {
+      migrationsFolder: path.resolve("drizzle"),
+    });
+    console.log("Migrations completed!");
+    process.exit(0);
+  } catch (err) {
+    console.error("Migration failed!", err);
+    process.exit(1);
+  }
+}
+
+main();

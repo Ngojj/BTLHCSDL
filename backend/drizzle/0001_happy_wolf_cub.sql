@@ -1,1 +1,0 @@
-ALTER TABLE "section" DROP CONSTRAINT "section_name_unique";

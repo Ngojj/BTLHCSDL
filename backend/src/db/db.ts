@@ -1,19 +1,15 @@
-import { Pool } from "pg";
-import {drizzle} from "drizzle-orm/node-postgres"
-import dotenv from 'dotenv'
+import mysql from "mysql2/promise";
+import { drizzle } from "drizzle-orm/mysql2";
+import dotenv from "dotenv";
 
-dotenv.config()
-//local DB
-// const pool = new Pool({
-//     connectionString: process.env.DATABASE_URL_LOCAL,
-//     ssl: {rejectUnauthorized: false}
-// })
+dotenv.config();
 
-//premote DB 
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: {rejectUnauthorized: false}
-})
+const pool = mysql.createPool({
+  host: process.env.DATABASE_HOST,
+  user: process.env.DATABASE_USER,
+  password: process.env.DATABASE_PASSWORD,
+  database: process.env.DATABASE,
+  port: Number(process.env.DATABASE_PORT) || 3306,
+});
 
-
-export const db = drizzle(pool)
+export const db = drizzle(pool);

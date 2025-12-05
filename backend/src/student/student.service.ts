@@ -1,4 +1,4 @@
-import { eq, sql } from "drizzle-orm"
+import { eq } from "drizzle-orm"
 import { db } from "../db/db"
 import { student, user } from "../db/schema"
 import userService from "../user/user.service"
@@ -89,25 +89,15 @@ class StudentService{
 
         const studentId = await this.generateUniqueStudentId(newUser[0].id)
 
-        const newStudent = await db
+        await db
         .insert(student)
         .values({
             userId: newUser[0].id,
             studentId: studentId,
-            enrollmentDate: new Date().toISOString(),
+            enrollmentDate: new Date(),
             numberCoursesEnrolled: 0,
             numberCoursesCompleted: 0,
         })
-        .returning({
-            studentId: student.studentId,
-            enrollmentDate: student.enrollmentDate,
-            numberCoursesEnrolled: student.numberCoursesEnrolled,
-            numberCoursesCompleted: student.numberCoursesCompleted
-        })
-
-        if(!newStudent || newStudent.length === 0) {
-            return null
-        }
 
         const token = await authService.getAccessToken(newUser[0])
 
@@ -181,21 +171,17 @@ class StudentService{
     }
 
     public deleteStudent = async (id: number) => {
-        const deleteStudent = await db
-        .delete(student)
-        .where(eq(student.userId, id))
-        .returning({
-            studentId: student.studentId,
-            enrollmentDate: student.enrollmentDate,
-            numberCourseEnrolled: student.numberCoursesEnrolled,
-            numberCourseCompleted: student.numberCoursesCompleted
-        })
+        const existingStudent = await this.getStudentById(id)
 
-        if(!deleteStudent || deleteStudent.length === 0){
+        if(!existingStudent || existingStudent.length === 0){
             return null
         }
 
-        return await userService.deleteUser(id, deleteStudent)
+        await db
+        .delete(student)
+        .where(eq(student.userId, id))
+
+        return await userService.deleteUser(id, existingStudent)
     }
 }
 

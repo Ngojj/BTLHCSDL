@@ -1,6 +1,13 @@
 {
     "out": "./migrations",
     "schema": "./src/db/schema.ts",
-    "dialect": "postgresql",
-    "breakpoint": true
+    "dialect": "mysql",
+    "breakpoint": true,
+    "dbCredentials": {
+        "host": "localhost",
+        "port": 3306,
+        "user": "root",
+        "password": "abc123",
+        "database": "backend"
+    }
 }

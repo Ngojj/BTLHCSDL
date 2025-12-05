@@ -16,7 +16,7 @@
                 role: user.role,
                 email: user.email,
                 bankName: user.bankName,
-                bankAccout: user.bankAccount,
+                bankAccount: user.bankAccount,
             })
             .from(user)
 
@@ -33,7 +33,7 @@
                 role: user.role,
                 email: user.email,
                 bankName: user.bankName,
-                bankAccout: user.bankAccount,
+                bankAccount: user.bankAccount,
             })
             .from(user)
             .where(eq(user.id, id))
@@ -63,7 +63,7 @@
             
             const hashedPassword = await bcrypt.hash(password, saltRounds)
 
-            const newUser = await db
+            await db
             .insert(user)
             .values({firstName,
                 lastName,
@@ -73,19 +73,10 @@
                 role,
                 bankAccount,
                 bankName})
-            .returning({
-                id: user.id,
-                firstName: user.firstName,
-                lastName: user.lastName,
-                username: user.username,
-                password: user.password,
-                role: user.role,
-                email: user.email,
-                bankName: user.bankName,
-                bankAccount: user.bankAccount,
-            })
 
-            return newUser
+            const createdUser = await this.getUserByUsername(username)
+
+            return createdUser ? [createdUser] : []
         }
 
         public updateUser = async (
@@ -97,7 +88,7 @@
             bankAccount: string,
         ) => {
 
-            const data = await db
+            await db
             .update(user)
             .set({
                 firstName,
@@ -107,48 +98,30 @@
                 bankName
                 })
             .where(eq(user.id, id))
-            .returning({
-                id: user.id,
-                firstName: user.firstName,
-                lastName: user.lastName,
-                username: user.username,
-                role: user.role,
-                email: user.email,
-                bankName: user.bankName,
-                bankAccount: user.bankAccount,
-            })
 
-            return data
+            return await this.getUserById(id)
         }
 
         public deleteUser= async (id: number, deleteStudentOrteacher: any) => {
-            const deleteUser = await db
-            .delete(user)
-            .where(eq(user.id,id))
-            .returning({
-                id: user.id,
-                firstName: user.firstName,
-                lastName: user.lastName,
-                username: user.username,
-                role: user.role,
-                email: user.email,
-                bankName: user.bankName,
-                bankAccount: user.bankAccount,
-            })
+            const existingUser = await this.getUserById(id)
 
-            if(!deleteUser || deleteUser.length === 0){
+            if(!existingUser || existingUser.length === 0){
                 return null
             }
 
+            await db
+            .delete(user)
+            .where(eq(user.id,id))
+
             return {
-                id: deleteUser[0].id,
-                firstName: deleteUser[0].firstName,
-                lastName: deleteUser[0].lastName,
-                username: deleteUser[0].username,
-                role: deleteUser[0].role,
-                email: deleteUser[0].email,
-                bankName: deleteUser[0].bankName,
-                bankAccount: deleteUser[0].bankAccount,
+                id: existingUser[0].id,
+                firstName: existingUser[0].firstName,
+                lastName: existingUser[0].lastName,
+                username: existingUser[0].username,
+                role: existingUser[0].role,
+                email: existingUser[0].email,
+                bankName: existingUser[0].bankName,
+                bankAccount: existingUser[0].bankAccount,
                 studentId: deleteStudentOrteacher[0].studentId,
                 enrollmentDate: deleteStudentOrteacher[0].enrollmentDate,
                 numberCoursesEnrolled: deleteStudentOrteacher[0].numberCoursesEnrolled,

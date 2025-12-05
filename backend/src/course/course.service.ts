@@ -3,11 +3,6 @@ import { db } from "../db/db"
 import { and, eq } from "drizzle-orm"
 import courseTopicService from "../courseTopic/courseTopic.service"
 class CourseService{
-    private FormatDate = (date: string) => {
-        const dateObj = new Date(date)
-        return `${dateObj.getFullYear()}-${dateObj.getMonth()}-${dateObj.getDate()}`
-    }
-
     public getAllCoursesWithTeacherInfo = async () => {
         try {
             const coursesWithTeachers = await db
@@ -168,26 +163,33 @@ class CourseService{
                     status: 400
                 }
             }
-            const newCourse = await db.insert(course).values({
+            await db.insert(course).values({
                 name: courseName,
                 language: language,
                 description: description,
                 teacherId: teacherId,
-                creTime: new Date().toISOString(),
+                creTime: new Date(),
                 avgQuiz: avgQuiz,
                 price: price,
-            }).returning({
-                courseId: course.id
             })
+
+            const createdCourse = await this.getCourseByName(courseName)
+
+            if(!createdCourse){
+                return {
+                    message: "Failed to create course",
+                    status: 500
+                }
+            }
 
             // insert topic into course
             for (let i = 0 ; i < topics.length; i++){
-                const addTopic = await courseTopicService.createCourseTopic(newCourse[0].courseId, topics[i])
+                await courseTopicService.createCourseTopic(createdCourse.courseId, topics[i])
             }
             return {
                 message: "Successfully created new course",
                 status: 200,
-                data: newCourse[0].courseId
+                data: createdCourse.courseId
             }
         } catch (error) {
             return {
@@ -243,7 +245,7 @@ class CourseService{
             return null
         }
 
-        const updatedCourse = await db.update(course)
+        await db.update(course)
         .set({
             name: courseName? courseName: courseExist.courseName,
             language: language? language: courseExist.language,
@@ -251,31 +253,23 @@ class CourseService{
             price: price? price: courseExist.price,
             avgQuiz: avgQuiz? avgQuiz: courseExist.avgQuiz,
         })
-        .returning({
-            teacherId: course.teacherId,
-            price: course.price,
-            avgQuiz: course.avgQuiz,
-            language: course.language,
-            name: course.name,
-            description: course.description,
-            creTime: course.creTime,
-            id: course.id,
-        })
         .where(eq(course.id, id))
+
+        const updatedCourse = await this.getCourseById(id)
 
         if (!updatedCourse){
             return null
         }
 
         return {
-            courseId: updatedCourse[0].id,
-            courseName: updatedCourse[0].name,
-            language: updatedCourse[0].language,
-            description: updatedCourse[0].description,
-            teacherId: updatedCourse[0].teacherId,
-            creationTime: updatedCourse[0].creTime,
-            avgQuiz: updatedCourse[0].avgQuiz,
-            price: updatedCourse[0].price,
+            courseId: updatedCourse.courseId,
+            courseName: updatedCourse.courseName,
+            language: updatedCourse.language,
+            description: updatedCourse.description,
+            teacherId: updatedCourse.teacherId,
+            creationTime: updatedCourse.creationTime,
+            avgQuiz: updatedCourse.avgQuiz,
+            price: updatedCourse.price,
         }
     }
 
@@ -293,7 +287,7 @@ class CourseService{
             return null
         }
 
-        const updatedCourse = await db.update(course)
+        await db.update(course)
         .set({
             name: newName? newName: courseExist.courseName,
             language: language? language: courseExist.language,
@@ -301,31 +295,23 @@ class CourseService{
             price: price? price: courseExist.price,
             avgQuiz: avgQuiz? avgQuiz: courseExist.avgQuiz
         })
-        .returning({
-            teacherId: course.teacherId,
-            price: course.price,
-            avgQuiz: course.avgQuiz,
-            language: course.language,
-            name: course.name,
-            description: course.description,
-            creTime: course.creTime,
-            id: course.id,
-        })
         .where(eq(course.name, name))
+
+        const updatedCourse = await this.getCourseByName(newName || name)
 
         if (!updatedCourse){
             return null
         }
 
         return {
-            courseId: updatedCourse[0].id,
-            courseName: updatedCourse[0].name,
-            language: updatedCourse[0].language,
-            description: updatedCourse[0].description,
-            teacherId: updatedCourse[0].teacherId,
-            creationTime: updatedCourse[0].creTime,
-            avgQuiz: updatedCourse[0].avgQuiz,
-            price: updatedCourse[0].price,
+            courseId: updatedCourse.courseId,
+            courseName: updatedCourse.courseName,
+            language: updatedCourse.language,
+            description: updatedCourse.description,
+            teacherId: updatedCourse.teacherId,
+            creationTime: updatedCourse.creationTime,
+            avgQuiz: updatedCourse.avgQuiz,
+            price: updatedCourse.price,
         }
 
 
