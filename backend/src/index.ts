@@ -25,6 +25,7 @@ import lectureRoutes from "./lecture/lecture.route";
 import interactRoutes from "./interact/interact.route"; 
 import includeCourseRoutes from "./includeCourse/includeCourse.route";
 import viewRoadMapRoutes from "./viewRoadMap/viewRoadMap.route";
+import storedProceduresRoutes from "./storedProcedures/storedProcedures.route";
 dotenv.config();
 
 const app: Express = express();
@@ -53,6 +54,7 @@ app.use('/lecture', lectureRoutes)
 app.use('/interact', interactRoutes)
 app.use('/includeCourse', includeCourseRoutes)
 app.use('/viewRoadMap', viewRoadMapRoutes)
+app.use('/api/sp', storedProceduresRoutes) // API cho stored procedures và functions
 const server = createServer(app)
 
 
