@@ -20,8 +20,10 @@ class StudentController{
             })
             
         }catch(e){
-            res.status(500).json({
-                message: e
+            const message = e instanceof Error ? e.message : String(e)
+            const status = message.includes("Username") || message.includes("Email") ? 400 : 500
+            res.status(status).json({
+                message
             })
         }
     }
@@ -80,7 +82,8 @@ class StudentController{
 
             return res.status(200).json({
                 message: 'success',
-                token: newStudent
+                token: newStudent.token,
+                user: newStudent.user,
             })
         }catch(e){
             res.status(500).json({

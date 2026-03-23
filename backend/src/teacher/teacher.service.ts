@@ -78,6 +78,48 @@ class TeacherService {
         
         return teacherByTeacherId;
     }
+
+    public ensureTeacherAccount = async (userId: number) => {
+        const existingTeacher = await db.select({
+            userId: teacher.userId,
+            teacherId: teacher.teacherId,
+        })
+        .from(teacher)
+        .where(eq(teacher.userId, userId))
+        .limit(1)
+
+        if (existingTeacher.length > 0) {
+            return existingTeacher[0]
+        }
+
+        const existingUser = await userService.getUserById(userId)
+
+        if (!existingUser || existingUser.length === 0) {
+            return null
+        }
+
+        if (existingUser[0].role.toLowerCase() !== 'teacher') {
+            return null
+        }
+
+        const generatedTeacherId = await this.generateUniqueTeacherId(userId)
+
+        await db.insert(teacher).values({
+            userId,
+            teacherId: generatedTeacherId,
+        })
+
+        const createdTeacher = await db.select({
+            userId: teacher.userId,
+            teacherId: teacher.teacherId,
+        })
+        .from(teacher)
+        .where(eq(teacher.userId, userId))
+        .limit(1)
+
+        return createdTeacher[0] ?? null
+    }
+
     public createNewTeacher = async (
         firstName: string,
         lastName: string,
@@ -127,7 +169,16 @@ class TeacherService {
         const token = await authService.getAccessToken(newUser[0])
 
         return {
-            token
+            token,
+            user: {
+                id: newUser[0].id,
+                role: newUser[0].role,
+                firstName: newUser[0].firstName,
+                lastName: newUser[0].lastName,
+                email: newUser[0].email,
+                bankName: newUser[0].bankName,
+                bankAccount: newUser[0].bankAccount,
+            }
         }
     }
 

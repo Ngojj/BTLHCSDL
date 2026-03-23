@@ -76,6 +76,39 @@ class TeacherService {
                 .where((0, drizzle_orm_1.eq)(schema_2.teacher.userId, teacherId));
             return teacherByTeacherId;
         });
+        this.ensureTeacherAccount = (userId) => __awaiter(this, void 0, void 0, function* () {
+            var _a;
+            const existingTeacher = yield db_1.db.select({
+                userId: schema_2.teacher.userId,
+                teacherId: schema_2.teacher.teacherId,
+            })
+                .from(schema_2.teacher)
+                .where((0, drizzle_orm_1.eq)(schema_2.teacher.userId, userId))
+                .limit(1);
+            if (existingTeacher.length > 0) {
+                return existingTeacher[0];
+            }
+            const existingUser = yield user_service_1.default.getUserById(userId);
+            if (!existingUser || existingUser.length === 0) {
+                return null;
+            }
+            if (existingUser[0].role.toLowerCase() !== 'teacher') {
+                return null;
+            }
+            const generatedTeacherId = yield this.generateUniqueTeacherId(userId);
+            yield db_1.db.insert(schema_2.teacher).values({
+                userId,
+                teacherId: generatedTeacherId,
+            });
+            const createdTeacher = yield db_1.db.select({
+                userId: schema_2.teacher.userId,
+                teacherId: schema_2.teacher.teacherId,
+            })
+                .from(schema_2.teacher)
+                .where((0, drizzle_orm_1.eq)(schema_2.teacher.userId, userId))
+                .limit(1);
+            return (_a = createdTeacher[0]) !== null && _a !== void 0 ? _a : null;
+        });
         this.createNewTeacher = (firstName, lastName, username, password, email, bankName, bankAccount) => __awaiter(this, void 0, void 0, function* () {
             const newUser = yield user_service_1.default.createNewUser(firstName, lastName, email, username, password, 'teacher', bankName, bankAccount);
             if (!newUser) {
@@ -101,7 +134,16 @@ class TeacherService {
             }
             const token = yield auth_service_1.default.getAccessToken(newUser[0]);
             return {
-                token
+                token,
+                user: {
+                    id: newUser[0].id,
+                    role: newUser[0].role,
+                    firstName: newUser[0].firstName,
+                    lastName: newUser[0].lastName,
+                    email: newUser[0].email,
+                    bankName: newUser[0].bankName,
+                    bankAccount: newUser[0].bankAccount,
+                }
             };
         });
         this.updateTeacher = (id, firstName, lastName, username, password, role, email, bankName, bankAccount, hashedPassword) => __awaiter(this, void 0, void 0, function* () {

@@ -1,9 +1,7 @@
 "use client"; 
 import localFont from "next/font/local";
 import "./globals.css";
-import { RecoilRoot, useRecoilState } from "recoil";
-import { useEffect } from "react";
-import { userLoginState } from "@/state";
+import { RecoilRoot } from "recoil";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",

@@ -5,12 +5,12 @@ import Footer from "@/components/Footer";
 import { CourseWithTeacherNameDto } from "../dtos/course.dto";
 import { useSearchParams } from "next/navigation";
 import { SectionDto } from "../dtos/section.dto";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import request from "../axios/axios";
 import { useRecoilState } from "recoil";
 import { userLoginState } from "@/state";
 
-const Studentdb = () =>{  
+const StudentdbContent = () =>{  
   const [userLogin, setUserLogin] = useRecoilState(userLoginState);
   const [sections, setSections] = useState<SectionDto[]>([])
   const searchParams = useSearchParams();
@@ -100,4 +100,10 @@ const Studentdb = () =>{
   );
 }
 
-export default Studentdb;
+export default function Studentdb() {
+  return (
+    <Suspense fallback={<>Loading...</>}>
+      <StudentdbContent />
+    </Suspense>
+  );
+}

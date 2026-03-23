@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { QuestionDto } from "../dtos/question.dto";
 import request from "../axios/axios";
 import Quiz from "@/components/Quizz";
@@ -9,7 +9,7 @@ import { useRecoilValue } from "recoil";
 import { userLoginState } from "@/state";
 import FillInTheBlank from "@/components/Fillinblank";
 
-const Home = () => {
+const QuizPageContent = () => {
   const searchParams = useSearchParams();
   const quizParam = searchParams.get("quiz");
   const user = useRecoilValue(userLoginState);
@@ -237,4 +237,10 @@ const Home = () => {
   );
 };
 
-export default Home;
+export default function Home() {
+  return (
+    <Suspense fallback={<main className="section-shell py-10 sm:py-14">Loading...</main>}>
+      <QuizPageContent />
+    </Suspense>
+  );
+}

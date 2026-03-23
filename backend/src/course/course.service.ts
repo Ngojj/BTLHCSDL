@@ -2,6 +2,7 @@ import { course, teacher, user } from "../db/schema"
 import { db } from "../db/db"
 import { and, eq } from "drizzle-orm"
 import courseTopicService from "../courseTopic/courseTopic.service"
+import teacherService from "../teacher/teacher.service"
 class CourseService{
     private FormatDate = (date: string) => {
         const dateObj = new Date(date)
@@ -170,19 +171,17 @@ class CourseService{
                 }
             }
 
-            const teacherExist = await db.select({ userId: teacher.userId })
-                                         .from(teacher)
-                                         .where(eq(teacher.userId, teacherId))
+            const teacherExist = await teacherService.ensureTeacherAccount(teacherId)
 
-            if (teacherExist.length === 0){
+            if (!teacherExist){
                 return {
-                    message: "Teacher account is not available in the teacher table",
+                    message: "Teacher account is invalid or unavailable",
                     status: 400
                 }
             }
 
             // check if course already exist
-            const courseExist = await db.select({})
+            const courseExist = await db.select({ id: course.id })
                                         .from(course)
                                         .where(and(eq(course.name, courseName), 
                                                    eq(course.teacherId, teacherId)))

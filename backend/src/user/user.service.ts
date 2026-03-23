@@ -6,6 +6,7 @@
     const saltRounds = 10
 
     class UserService{
+        private readonly usernameRegex = /^[A-Za-z0-9_]{4,}$/
         public getAllUsers = async () =>{
             const all = await db
             .select({
@@ -60,23 +61,48 @@
             role: string, 
             bankName: string,
             bankAccount: string) => {
-            
-            const hashedPassword = await bcrypt.hash(password, saltRounds)
+            const normalizedUsername = String(username ?? "").trim()
+            if (!this.usernameRegex.test(normalizedUsername)) {
+                throw new Error("Username must be at least 4 characters and contain only letters, numbers, underscores")
+            }
 
-            await db
-            .insert(user)
-            .values({firstName,
-                lastName,
-                email,
-                username,
-                password: hashedPassword,
-                role,
-                bankAccount,
-                bankName})
+            const existingByUsername = await this.getUserByUsername(normalizedUsername)
+            if (existingByUsername) {
+                throw new Error("Tên đăng nhập đã tồn tại")
+            }
 
-            const createdUser = await this.getUserByUsername(username)
+            const existingByEmail = await this.getUserByEmail(email)
+            if (existingByEmail) {
+                throw new Error("Email đã được sử dụng")
+            }
 
-            return createdUser ? [createdUser] : []
+            try {
+                const hashedPassword = await bcrypt.hash(password, saltRounds)
+
+                await db
+                .insert(user)
+                .values({firstName,
+                    lastName,
+                    email,
+                    username: normalizedUsername,
+                    password: hashedPassword,
+                    role,
+                    bankAccount,
+                    bankName})
+
+                const createdUser = await this.getUserByUsername(normalizedUsername)
+
+                return createdUser ? [createdUser] : []
+            } catch (error: any) {
+                const message = String(error?.message || "")
+                if (message.includes("Duplicate entry") && message.includes("username")) {
+                    throw new Error("Tên đăng nhập đã tồn tại")
+                }
+                if (message.includes("Duplicate entry") && message.includes("email")) {
+                    throw new Error("Email đã được sử dụng")
+                }
+                throw error
+            }
         }
 
         public updateUser = async (
@@ -136,6 +162,16 @@
             .where(eq(user.username,username))
             .limit(1)
             
+            return data[0]
+        }
+
+        public getUserByEmail = async (email: string) => {
+            const data = await db
+            .select()
+            .from(user)
+            .where(eq(user.email, email))
+            .limit(1)
+
             return data[0]
         }
 

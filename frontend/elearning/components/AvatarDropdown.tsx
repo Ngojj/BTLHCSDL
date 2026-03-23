@@ -3,7 +3,7 @@ import { defaultUserLogin } from "@/app/dtos/user.dto";
 import { userLoginState } from "@/state";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
-import { useSetRecoilState } from "recoil";
+import { useRecoilValue, useSetRecoilState } from "recoil";
 
 interface AvatarDropdownProps {
   avatar: string;
@@ -13,54 +13,58 @@ interface AvatarDropdownProps {
 
 const AvatarDropdown: React.FC<AvatarDropdownProps> = ({ avatar, name, email }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const setUserLogin = useSetRecoilState(userLoginState)
-  const router = useRouter()
+  const setUserLogin = useSetRecoilState(userLoginState);
+  const userLogin = useRecoilValue(userLoginState);
+  const router = useRouter();
 
   const toggleDropdown = () => {
     setIsOpen(!isOpen);
   };
 
   const handeLogout = () => {
-    const confirm = window.confirm("Bạn có chắc chắn muốn đăng xuất không!")
-    if(!confirm) return
-    sessionStorage.removeItem('userLogin')
+    const confirm = window.confirm("Ban co chac chan muon dang xuat khong?");
+    if (!confirm) return;
+    sessionStorage.removeItem("userLogin");
+    setUserLogin(defaultUserLogin);
+    router.push("/");
+  };
 
-    setUserLogin(defaultUserLogin)
-    router.push('/')
-  }
+  const profilePath = String(userLogin.role || "").toLowerCase() === "teacher"
+    ? "/teacher"
+    : "/student/updatestu";
 
   return (
     <div className="relative">
       <button
         id="avatarButton"
-        className="flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-lg shadow cursor-pointer hover:bg-gray-200 transition-all"
+        className="flex cursor-pointer items-center gap-2 rounded-lg bg-gray-100 px-3 py-2 shadow transition-all hover:bg-gray-200"
         onClick={toggleDropdown}
       >
         <img
           src={avatar}
           alt="User Avatar"
-          className="w-8 h-8 rounded-full"
+          className="h-8 w-8 rounded-full"
         />
-        <span className="text-gray-800 text-sm font-medium">{name}</span>
+        <span className="text-sm font-medium text-gray-800">{name}</span>
       </button>
 
       {isOpen && (
         <div
           id="userDropdown"
-          className="z-10 absolute right-0 mt-2 bg-white divide-y divide-gray-100 rounded-lg shadow w-44"
+          className="absolute right-0 z-10 mt-2 w-44 divide-y divide-gray-100 rounded-lg bg-white shadow"
         >
           <div className="px-4 py-3 text-sm text-gray-900">
             <div>{name}</div>
-            <div className="font-medium truncate text-gray-500">{email}</div>
+            <div className="truncate font-medium text-gray-500">{email}</div>
           </div>
           <ul className="py-2 text-sm text-gray-700">
             <li>
               <a
                 href="#"
                 className="block px-4 py-2 hover:bg-gray-100"
-                onClick={() => router.push('/student/updatestu')}
+                onClick={() => router.push(profilePath)}
               >
-                Hồ sơ
+                Ho so
               </a>
             </li>
           </ul>
@@ -70,7 +74,7 @@ const AvatarDropdown: React.FC<AvatarDropdownProps> = ({ avatar, name, email }) 
               className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
               onClick={() => handeLogout()}
             >
-              Đăng xuất
+              Dang xuat
             </a>
           </div>
         </div>

@@ -1,5 +1,5 @@
 'use client';
-import { ChangeEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Header from "../../teacher_components/header"
 import Sidebar from "../../teacher_components/sidebar"
 import { userLoginState } from "@/state";
@@ -14,7 +14,7 @@ interface Question {
     answer: string;
 }
 
-const editQuizPage = ({ params }: { params: Promise<{ quizId: string }> }) => {
+const EditQuizPage = ({ params }: { params: Promise<{ quizId: string }> }) => {
     const [rtnParams, setRtnParams] = useState<{ quizId: string }>({ quizId: "" });
     const loadParams = async () => {
         const unwrappedParams = await params;
@@ -382,5 +382,4 @@ const editQuizPage = ({ params }: { params: Promise<{ quizId: string }> }) => {
         </div>
     )
 }
-export default editQuizPage
-
+export default EditQuizPage

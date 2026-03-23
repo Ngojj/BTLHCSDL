@@ -16,6 +16,7 @@ const schema_1 = require("../db/schema");
 const db_1 = require("../db/db");
 const drizzle_orm_1 = require("drizzle-orm");
 const courseTopic_service_1 = __importDefault(require("../courseTopic/courseTopic.service"));
+const teacher_service_1 = __importDefault(require("../teacher/teacher.service"));
 class CourseService {
     constructor() {
         this.FormatDate = (date) => {
@@ -161,17 +162,15 @@ class CourseService {
                         status: 400
                     };
                 }
-                const teacherExist = yield db_1.db.select({ userId: schema_1.teacher.userId })
-                    .from(schema_1.teacher)
-                    .where((0, drizzle_orm_1.eq)(schema_1.teacher.userId, teacherId));
-                if (teacherExist.length === 0) {
+                const teacherExist = yield teacher_service_1.default.ensureTeacherAccount(teacherId);
+                if (!teacherExist) {
                     return {
-                        message: "Teacher account is not available in the teacher table",
+                        message: "Teacher account is invalid or unavailable",
                         status: 400
                     };
                 }
                 // check if course already exist
-                const courseExist = yield db_1.db.select({})
+                const courseExist = yield db_1.db.select({ id: schema_1.course.id })
                     .from(schema_1.course)
                     .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(schema_1.course.name, courseName), (0, drizzle_orm_1.eq)(schema_1.course.teacherId, teacherId)));
                 if (courseExist.length !== 0) {

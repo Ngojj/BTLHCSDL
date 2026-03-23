@@ -102,7 +102,16 @@ class StudentService{
         const token = await authService.getAccessToken(newUser[0])
 
         return {
-            token
+            token,
+            user: {
+                id: newUser[0].id,
+                role: newUser[0].role,
+                firstName: newUser[0].firstName,
+                lastName: newUser[0].lastName,
+                email: newUser[0].email,
+                bankName: newUser[0].bankName,
+                bankAccount: newUser[0].bankAccount,
+            }
         }
     }
 

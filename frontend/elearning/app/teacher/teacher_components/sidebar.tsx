@@ -3,19 +3,24 @@
 import Image from 'next/image';
 import teacherimg from "../../public/tichcho.jpeg";
 import { useRouter } from 'next/navigation';
+import { useSetRecoilState } from 'recoil';
+import { userLoginState } from '@/state';
+import { defaultUserLogin } from '@/app/dtos/user.dto';
 
 const Sidebar = (firstName: string, lastName: string) => {
   const router = useRouter();
+  const setUserLogin = useSetRecoilState(userLoginState);
 
   const menuItems = [
     { label: 'Dashboard', action: () => router.push('/teacher') },
-    { label: 'Quản lý khóa học', action: () => window.open('/teacher/courses', '_blank') },
+    { label: 'Quản lý khóa học', action: () => router.push('/teacher/courses') },
     { label: 'Doanh thu', action: () => router.push('/teacher/revenue') },
     { label: 'Lộ trình', action: () => router.push('/teacher/roadmap') },
   ]
 
   const handleLogout = () => {
     sessionStorage.removeItem('userLogin')
+    setUserLogin(defaultUserLogin)
     router.push('/')
   }
 

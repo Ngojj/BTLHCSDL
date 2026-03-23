@@ -1,7 +1,6 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import request from "@/app/axios/axios";
 import { OptionDto } from "@/app/dtos/option.dto";
-import { useRouter } from "next/navigation";
 
 export type QuizProps = {
   id: number;

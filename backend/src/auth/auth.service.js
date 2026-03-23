@@ -20,7 +20,18 @@ class AuthService {
             return yield bcrypt_1.default.compare(password, user.password);
         });
         this.getAccessToken = (user) => __awaiter(this, void 0, void 0, function* () {
-            return jsonwebtoken_1.default.sign(user, process.env.TOKEN_SECRET || 'user_token_secret', { expiresIn: 60 * 60 });
+            const secret = process.env.TOKEN_SECRET;
+            if (!secret) {
+                throw new Error("Missing TOKEN_SECRET");
+            }
+            const claims = {
+                sub: user.id,
+                role: user.role,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                email: user.email,
+            };
+            return jsonwebtoken_1.default.sign(claims, secret, { expiresIn: 60 * 60 });
         });
     }
 }

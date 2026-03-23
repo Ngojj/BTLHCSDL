@@ -1,8 +1,17 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     images: {
-        domains: ['lms.hcmut.edu.vn','images.unsplash.com'],
-      },
+        remotePatterns: [
+            {
+                protocol: 'https',
+                hostname: 'lms.hcmut.edu.vn',
+            },
+            {
+                protocol: 'https',
+                hostname: 'images.unsplash.com',
+            },
+        ],
+    },
 };
 
 export default nextConfig;

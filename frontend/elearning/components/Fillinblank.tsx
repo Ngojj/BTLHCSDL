@@ -59,7 +59,11 @@ const FillInTheBlank: React.FC<QuizProps> = ({
               type="button"
               className={`py-2 border-2 ${state ? "border-red-500 text-red-500" : "border-blue-500 text-blue-500"} hover:scale-110 active scale-90 w-32 rounded-xl`}
               onClick={() => {
-                state ? handleBlockedButton() : handleUnblockedButtion()
+                if (state) {
+                  handleBlockedButton();
+                  return;
+                }
+                handleUnblockedButtion();
               }}>
                 {state ? "Mở khóa" : "Khóa"}
             </button>

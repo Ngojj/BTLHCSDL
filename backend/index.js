@@ -1,0 +1,63 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = __importDefault(require("express"));
+const dotenv_1 = __importDefault(require("dotenv"));
+const http_1 = require("http");
+const user_route_1 = __importDefault(require("./src/user/user.route"));
+const auth_route_1 = __importDefault(require("./src/auth/auth.route"));
+const teacher_route_1 = __importDefault(require("./src/teacher/teacher.route"));
+const student_route_1 = __importDefault(require("./src/student/student.route"));
+const course_route_1 = __importDefault(require("./src/course/course.route"));
+const cors_1 = __importDefault(require("cors"));
+const teacherQualification_route_1 = __importDefault(require("./src/teacherQualification/teacherQualification.route"));
+const courseTopic_route_1 = __importDefault(require("./src/courseTopic/courseTopic.route"));
+const section_route_1 = __importDefault(require("./src/section/section.route"));
+const quiz_route_1 = __importDefault(require("./src/quiz/quiz.route"));
+const question_route_1 = __importDefault(require("./src/question/question.route"));
+const option_route_1 = __importDefault(require("./src/option/option.route"));
+const roadMap_route_1 = __importDefault(require("./src/roadMap/roadMap.route"));
+const requireCourse_route_1 = __importDefault(require("./src/requireCourse/requireCourse.route"));
+const certification_route_1 = __importDefault(require("./src/certification/certification.route"));
+const join_route_1 = __importDefault(require("./src/join/join.route"));
+const dO_route_1 = __importDefault(require("./src/dO/dO.route"));
+const answerRecord_route_1 = __importDefault(require("./src/answerRecord/answerRecord.route"));
+const lecture_route_1 = __importDefault(require("./src/lecture/lecture.route"));
+const interact_route_1 = __importDefault(require("./src/interact/interact.route"));
+const includeCourse_route_1 = __importDefault(require("./src/includeCourse/includeCourse.route"));
+const viewRoadMap_route_1 = __importDefault(require("./src/viewRoadMap/viewRoadMap.route"));
+dotenv_1.default.config();
+const app = (0, express_1.default)();
+const port = process.env.PORT || 4000;
+if (!process.env.TOKEN_SECRET) {
+    throw new Error("Missing TOKEN_SECRET in backend .env");
+}
+app.use((0, cors_1.default)()); // Enable CORS
+app.use(express_1.default.json());
+app.use('/user', user_route_1.default);
+app.use('/student', student_route_1.default);
+app.use('/teacher', teacher_route_1.default);
+app.use('/auth', auth_route_1.default);
+app.use('/course', course_route_1.default);
+app.use('/teacherQualification', teacherQualification_route_1.default);
+app.use('/courseTopic', courseTopic_route_1.default);
+app.use('/section', section_route_1.default);
+app.use('/quiz', quiz_route_1.default);
+app.use('/question', question_route_1.default);
+app.use('/option', option_route_1.default);
+app.use('/roadMap', roadMap_route_1.default);
+app.use('/requireCourse', requireCourse_route_1.default);
+app.use('/certification', certification_route_1.default);
+app.use('/join', join_route_1.default);
+app.use('/dO', dO_route_1.default);
+app.use('/answerRecord', answerRecord_route_1.default);
+app.use('/lecture', lecture_route_1.default);
+app.use('/interact', interact_route_1.default);
+app.use('/includeCourse', includeCourse_route_1.default);
+app.use('/viewRoadMap', viewRoadMap_route_1.default);
+const server = (0, http_1.createServer)(app);
+server.listen(port, () => {
+    console.log(`[server]: Server is running at http://localhost:${port}`);
+});

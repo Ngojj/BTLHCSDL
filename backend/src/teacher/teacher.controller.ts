@@ -76,12 +76,15 @@ class TeacherController{
 
             return res.status(200).json({
                 message: 'success',
-                token: newTeacher
+                token: newTeacher.token,
+                user: newTeacher.user,
             })
         }catch(e:any){
             console.log(e)
-            res.status(500).json({
-                message: e.message
+            const message = e instanceof Error ? e.message : String(e)
+            const status = message.includes("Username") || message.includes("Email") ? 400 : 500
+            res.status(status).json({
+                message
             })
         }
     }

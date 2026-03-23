@@ -85,7 +85,16 @@ class StudentService {
             });
             const token = yield auth_service_1.default.getAccessToken(newUser[0]);
             return {
-                token
+                token,
+                user: {
+                    id: newUser[0].id,
+                    role: newUser[0].role,
+                    firstName: newUser[0].firstName,
+                    lastName: newUser[0].lastName,
+                    email: newUser[0].email,
+                    bankName: newUser[0].bankName,
+                    bankAccount: newUser[0].bankAccount,
+                }
             };
         });
         this.updateNumberOfCourseComplete = (studentId) => __awaiter(this, void 0, void 0, function* () {

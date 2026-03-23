@@ -3,7 +3,6 @@ import Image from "next/image";
 import React, { useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import jwt from "jsonwebtoken";
 import { UserLoginDto } from "../dtos/user.dto";
 import { useSetRecoilState } from "recoil";
 import { userLoginState } from "@/state";
@@ -30,21 +29,29 @@ export default function Signup() {
   };
 
   const saveAuthAndRedirect = (response: any, redirectPath: string) => {
-    const decoded = jwt.decode(response.data.token.token) as jwt.JwtPayload | null;
+    const serverUser = response.data.user as {
+      id: number | string;
+      role: string;
+      firstName: string;
+      lastName: string;
+      email: string;
+      bankName?: string;
+      bankAccount?: string;
+    } | undefined;
 
-    if (!decoded) {
-      throw new Error("Invalid token");
+    if (!serverUser || !response.data.token) {
+      throw new Error("Invalid signup response");
     }
 
     const data: UserLoginDto = {
-      id: decoded.id as string,
-      role: decoded.role as string,
-      firstName: decoded.firstName as string,
-      lastName: decoded.lastName as string,
+      id: String(serverUser.id),
+      role: serverUser.role,
+      firstName: serverUser.firstName,
+      lastName: serverUser.lastName,
       token: response.data.token,
-      email: decoded.email as string,
-      bankName: decoded.bankName as string,
-      bankAccount: decoded.bankAccount as string,
+      email: serverUser.email,
+      bankName: serverUser.bankName || "",
+      bankAccount: serverUser.bankAccount || "",
     };
 
     setUserLogin(data);

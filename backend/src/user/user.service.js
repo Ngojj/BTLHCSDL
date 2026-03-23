@@ -55,19 +55,39 @@ class UserService {
             return data;
         });
         this.createNewUser = (firstName, lastName, email, username, password, role, bankName, bankAccount) => __awaiter(this, void 0, void 0, function* () {
-            const hashedPassword = yield bcrypt.hash(password, saltRounds);
-            yield db_1.db
-                .insert(schema_1.user)
-                .values({ firstName,
-                lastName,
-                email,
-                username,
-                password: hashedPassword,
-                role,
-                bankAccount,
-                bankName });
-            const createdUser = yield this.getUserByUsername(username);
-            return createdUser ? [createdUser] : [];
+            const existingByUsername = yield this.getUserByUsername(username);
+            if (existingByUsername) {
+                throw new Error("Tên đăng nhập đã tồn tại");
+            }
+            const existingByEmail = yield this.getUserByEmail(email);
+            if (existingByEmail) {
+                throw new Error("Email đã được sử dụng");
+            }
+            try {
+                const hashedPassword = yield bcrypt.hash(password, saltRounds);
+                yield db_1.db
+                    .insert(schema_1.user)
+                    .values({ firstName,
+                    lastName,
+                    email,
+                    username,
+                    password: hashedPassword,
+                    role,
+                    bankAccount,
+                    bankName });
+                const createdUser = yield this.getUserByUsername(username);
+                return createdUser ? [createdUser] : [];
+            }
+            catch (error) {
+                const message = String((error === null || error === void 0 ? void 0 : error.message) || "");
+                if (message.includes("Duplicate entry") && message.includes("username")) {
+                    throw new Error("Tên đăng nhập đã tồn tại");
+                }
+                if (message.includes("Duplicate entry") && message.includes("email")) {
+                    throw new Error("Email đã được sử dụng");
+                }
+                throw error;
+            }
         });
         this.updateUser = (id, firstName, lastName, email, bankName, bankAccount) => __awaiter(this, void 0, void 0, function* () {
             yield db_1.db
@@ -110,6 +130,14 @@ class UserService {
                 .select()
                 .from(schema_1.user)
                 .where((0, drizzle_orm_1.eq)(schema_1.user.username, username))
+                .limit(1);
+            return data[0];
+        });
+        this.getUserByEmail = (email) => __awaiter(this, void 0, void 0, function* () {
+            const data = yield db_1.db
+                .select()
+                .from(schema_1.user)
+                .where((0, drizzle_orm_1.eq)(schema_1.user.email, email))
                 .limit(1);
             return data[0];
         });

@@ -1,6 +1,7 @@
     import { Request, Response } from "express"
     import userService from "../user/user.service"
     import authService from "./auth.service"
+    import teacherService from "../teacher/teacher.service"
 
     class AuthController{
         public login = async (req: Request, res: Response) => {
@@ -25,9 +26,22 @@
 
                     const token = await authService.getAccessToken(user)
 
+                    if (user.role?.toLowerCase() === 'teacher') {
+                        await teacherService.ensureTeacherAccount(user.id)
+                    }
+
                     return res.status(200).json({
                         message: "Login successfully!",
-                        token: token
+                        token: token,
+                        user: {
+                            id: user.id,
+                            role: user.role,
+                            firstName: user.firstName,
+                            lastName: user.lastName,
+                            email: user.email,
+                            bankName: user.bankName,
+                            bankAccount: user.bankAccount,
+                        }
                     })
             }catch(e){
                 return res.status(500).json({

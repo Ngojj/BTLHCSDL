@@ -7,7 +7,6 @@ import axios from "axios";
 import { UserLoginDto } from "../dtos/user.dto";
 import { useSetRecoilState } from "recoil";
 import { userLoginState } from "@/state";
-import jwt from "jsonwebtoken";
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
@@ -34,27 +33,35 @@ export default function Login() {
         password,
       });
 
-      const decoded = jwt.decode(response.data.token) as jwt.JwtPayload | null;
+      const serverUser = response.data.user as {
+        id: number | string;
+        role: string;
+        firstName: string;
+        lastName: string;
+        email: string;
+        bankName?: string;
+        bankAccount?: string;
+      } | undefined;
 
-      if (!decoded) {
-        throw new Error("Invalid token");
+      if (!serverUser || !response.data.token) {
+        throw new Error("Invalid login response");
       }
 
       const data: UserLoginDto = {
-        id: decoded.id as string,
-        role: decoded.role as string,
-        firstName: decoded.firstName as string,
-        lastName: decoded.lastName as string,
+        id: String(serverUser.id),
+        role: serverUser.role,
+        firstName: serverUser.firstName,
+        lastName: serverUser.lastName,
         token: response.data.token,
-        email: decoded.email as string,
-        bankName: decoded.bankName as string,
-        bankAccount: decoded.bankAccount as string,
+        email: serverUser.email,
+        bankName: serverUser.bankName || "",
+        bankAccount: serverUser.bankAccount || "",
       };
 
       setUserLogin(data);
       sessionStorage.setItem("userLogin", JSON.stringify(data));
 
-      if (decoded.role === "student") {
+      if (serverUser.role === "student") {
         router.push("/");
       } else {
         router.push("/teacher");

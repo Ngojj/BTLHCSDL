@@ -66,7 +66,8 @@ class TeacherController {
                 }
                 return res.status(200).json({
                     message: 'success',
-                    token: newTeacher
+                    token: newTeacher.token,
+                    user: newTeacher.user,
                 });
             }
             catch (e) {
