@@ -41,6 +41,28 @@ class CourseController {
             }
         });
     }
+    debugAllCourses(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            var _a;
+            try {
+                // Lấy tất cả khóa học từ database (không join) để debug
+                const allCourses = yield course_service_1.default.getAllCourses();
+                const coursesWithTeacher = yield course_service_1.default.getAllCoursesWithTeacherInfo();
+                return res.status(200).json({
+                    message: "Debug: All courses in database",
+                    totalCourses: ((_a = allCourses.data) === null || _a === void 0 ? void 0 : _a.length) || 0,
+                    rawCourses: allCourses.data,
+                    coursesWithTeacher: coursesWithTeacher.data
+                });
+            }
+            catch (error) {
+                return res.status(500).json({
+                    message: "Error: " + error.message,
+                    status: 500
+                });
+            }
+        });
+    }
     getAllCourseByTeacherId(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
@@ -111,7 +133,7 @@ class CourseController {
             }
             catch (error) {
                 res.status(500).json({
-                    message: error,
+                    message: error instanceof Error ? error.message : String(error),
                     status: 500
                 });
             }

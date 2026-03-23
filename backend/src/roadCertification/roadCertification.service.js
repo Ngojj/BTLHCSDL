@@ -72,8 +72,8 @@ class roadCertificationService {
             try {
                 const returnVal = yield db_1.db.insert(schema_1.roadCertification).values({
                     name: roadCertificationDto.name,
-                    expDate: roadCertificationDto.expDate,
-                    issueDate: roadCertificationDto.issueDate,
+                    expDate: roadCertificationDto.expDate ? new Date(roadCertificationDto.expDate) : null,
+                    issueDate: new Date(roadCertificationDto.issueDate),
                     courseId: roadCertificationDto.courseId,
                     studentId: roadCertificationDto.studentId
                 });
@@ -96,8 +96,8 @@ class roadCertificationService {
             try {
                 const returnVal = yield db_1.db.update(schema_1.roadCertification).set({
                     name: roadCertificationDto.name,
-                    expDate: roadCertificationDto.expDate,
-                    issueDate: roadCertificationDto.issueDate,
+                    expDate: roadCertificationDto.expDate ? new Date(roadCertificationDto.expDate) : null,
+                    issueDate: new Date(roadCertificationDto.issueDate),
                     courseId: roadCertificationDto.courseId,
                     studentId: roadCertificationDto.studentId
                 })

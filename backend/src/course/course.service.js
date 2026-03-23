@@ -18,6 +18,10 @@ const drizzle_orm_1 = require("drizzle-orm");
 const courseTopic_service_1 = __importDefault(require("../courseTopic/courseTopic.service"));
 class CourseService {
     constructor() {
+        this.FormatDate = (date) => {
+            const dateObj = new Date(date);
+            return `${dateObj.getFullYear()}-${dateObj.getMonth()}-${dateObj.getDate()}`;
+        };
         this.getAllCoursesWithTeacherInfo = () => __awaiter(this, void 0, void 0, function* () {
             try {
                 const coursesWithTeachers = yield db_1.db
@@ -145,6 +149,27 @@ class CourseService {
         });
         this.createNewCourse = (courseName, language, description, teacherId, price, topics, avgQuiz) => __awaiter(this, void 0, void 0, function* () {
             try {
+                if (!courseName || !description) {
+                    return {
+                        message: "Course name and description are required",
+                        status: 400
+                    };
+                }
+                if (!teacherId || Number.isNaN(Number(teacherId))) {
+                    return {
+                        message: "Invalid teacher account",
+                        status: 400
+                    };
+                }
+                const teacherExist = yield db_1.db.select({ userId: schema_1.teacher.userId })
+                    .from(schema_1.teacher)
+                    .where((0, drizzle_orm_1.eq)(schema_1.teacher.userId, teacherId));
+                if (teacherExist.length === 0) {
+                    return {
+                        message: "Teacher account is not available in the teacher table",
+                        status: 400
+                    };
+                }
                 // check if course already exist
                 const courseExist = yield db_1.db.select({})
                     .from(schema_1.course)
@@ -164,6 +189,7 @@ class CourseService {
                     avgQuiz: avgQuiz,
                     price: price,
                 });
+                // Query lại để lấy courseId
                 const createdCourse = yield this.getCourseByName(courseName);
                 if (!createdCourse) {
                     return {
@@ -183,7 +209,7 @@ class CourseService {
             }
             catch (error) {
                 return {
-                    message: error,
+                    message: error instanceof Error ? error.message : String(error),
                     status: 500
                 };
             }
@@ -228,6 +254,7 @@ class CourseService {
                 avgQuiz: avgQuiz ? avgQuiz : courseExist.avgQuiz,
             })
                 .where((0, drizzle_orm_1.eq)(schema_1.course.id, id));
+            // Query lại để lấy dữ liệu đã update
             const updatedCourse = yield this.getCourseById(id);
             if (!updatedCourse) {
                 return null;
@@ -257,6 +284,7 @@ class CourseService {
                 avgQuiz: avgQuiz ? avgQuiz : courseExist.avgQuiz
             })
                 .where((0, drizzle_orm_1.eq)(schema_1.course.name, name));
+            // Query lại để lấy dữ liệu đã update (dùng tên mới nếu có, không thì dùng tên cũ)
             const updatedCourse = yield this.getCourseByName(newName || name);
             if (!updatedCourse) {
                 return null;

@@ -73,21 +73,17 @@ class courseTopicService {
 
 
             // create course topic
-            const newCourseTopic = await db.insert(courseTopic)
-                                            .values({
-                                                courseId: courseId,
-                                                topic: topic
-                                            })  
-                                            .returning({
-                                                courseId: courseTopic.courseId,
-                                                topic: courseTopic.topic
-                                            });
+            await db.insert(courseTopic)
+                    .values({
+                        courseId: courseId,
+                        topic: topic
+                    });
 
             return {
                 message: "Successfully created course topic",
                 data: {
-                    courseId: newCourseTopic[0].courseId,
-                    topic: newCourseTopic[0].topic
+                    courseId,
+                    topic
                 },
                 status: 200
             }
@@ -115,21 +111,17 @@ class courseTopicService {
             }
 
             // update course topic
-            const updateCourseTopic = await db.update(courseTopic)
-                                            .set({
-                                                topic: topic
-                                            })
-                                            .where(eq(courseTopic.courseId, courseId))
-                                            .returning({
-                                                courseId: courseTopic.courseId,
-                                                topic: courseTopic.topic
-                                            });
+            await db.update(courseTopic)
+                    .set({
+                        topic: topic
+                    })
+                    .where(eq(courseTopic.courseId, courseId));
 
             return {
                 message: "Successfully updated course topic",
                 data: {
-                    courseId: updateCourseTopic[0].courseId,
-                    topic: updateCourseTopic[0].topic
+                    courseId,
+                    topic
                 },
                 status: 200
             }

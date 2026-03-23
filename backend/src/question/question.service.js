@@ -136,23 +136,41 @@ class questionService {
     createQuestion(quizId, type, answer, content, teacherId, options) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const create = yield db_1.db.insert(schema_1.question)
+                const lastQuestion = yield db_1.db.select({
+                    id: schema_1.question.id
+                })
+                    .from(schema_1.question)
+                    .orderBy((0, drizzle_orm_1.desc)(schema_1.question.id))
+                    .limit(1);
+                const nextQuestionId = lastQuestion.length === 0 ? 1 : Number(lastQuestion[0].id) + 1;
+                yield db_1.db.insert(schema_1.question)
                     .values({
+                    id: nextQuestionId,
                     quizId: quizId,
                     type: type,
                     answer: answer,
                     content: content,
                     teacherId: teacherId
-                })
-                    .returning({
-                    questionId: schema_1.question.id
                 });
+                // Query lại để lấy questionId (dùng quizId, content, teacherId để tìm)
+                const createdQuestion = yield db_1.db.select({
+                    questionId: schema_1.question.id
+                })
+                    .from(schema_1.question)
+                    .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(schema_1.question.id, nextQuestionId), (0, drizzle_orm_1.eq)(schema_1.question.quizId, quizId), (0, drizzle_orm_1.eq)(schema_1.question.content, content), (0, drizzle_orm_1.eq)(schema_1.question.teacherId, teacherId)))
+                    .limit(1);
+                if (!createdQuestion || createdQuestion.length === 0) {
+                    return {
+                        status: 500,
+                        message: "Failed to create question"
+                    };
+                }
                 // if type is "multiple choice" then create options
                 if (type === "multiple choice") {
                     for (let i = 0; i < options.length; i++) {
                         yield db_1.db.insert(schema_1.option)
                             .values({
-                            questionId: create[0].questionId,
+                            questionId: createdQuestion[0].questionId,
                             option: options[i]
                         });
                     }
@@ -160,7 +178,7 @@ class questionService {
                 return {
                     status: 200,
                     message: "Question created successfully",
-                    data: create[0].questionId
+                    data: createdQuestion[0].questionId
                 };
             }
             catch (error) {

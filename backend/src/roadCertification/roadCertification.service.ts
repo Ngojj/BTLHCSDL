@@ -60,8 +60,8 @@ class roadCertificationService {
     try {
         const returnVal = await db.insert(roadCertification).values({
             name: roadCertificationDto.name,
-            expDate: roadCertificationDto.expDate,
-            issueDate: roadCertificationDto.issueDate,
+            expDate: roadCertificationDto.expDate ? new Date(roadCertificationDto.expDate) : null,
+            issueDate: new Date(roadCertificationDto.issueDate),
             courseId: roadCertificationDto.courseId,
             studentId: roadCertificationDto.studentId
         })
@@ -82,8 +82,8 @@ class roadCertificationService {
         try {
             const returnVal = await db.update(roadCertification).set({
                 name: roadCertificationDto.name,
-                expDate: roadCertificationDto.expDate,
-                issueDate: roadCertificationDto.issueDate,
+                expDate: roadCertificationDto.expDate ? new Date(roadCertificationDto.expDate) : null,
+                issueDate: new Date(roadCertificationDto.issueDate),
                 courseId: roadCertificationDto.courseId,
                 studentId: roadCertificationDto.studentId
             })

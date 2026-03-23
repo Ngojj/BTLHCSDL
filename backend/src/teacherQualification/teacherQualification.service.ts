@@ -1,7 +1,7 @@
 
 import { db } from "../db/db";
 import { teacher, teacherQualification, user } from "../db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 class teacherQualificationService {
     public async getAllTeacherQualification(){
         try {
@@ -120,14 +120,20 @@ class teacherQualificationService {
                 qualification: qualification
             }
 
-            const newQuali = await db.insert(teacherQualification)
+            await db.insert(teacherQualification)
                     .values(teacherQualificationData)
-                    .returning(
-                        {
-                            teacherId: teacherQualification.teacherId,
-                            qualification: teacherQualification.qualification
-                        }
-                    )
+
+            // Query lại để lấy dữ liệu đã insert
+            const newQuali = await db.select({
+                teacherId: teacherQualification.teacherId,
+                qualification: teacherQualification.qualification
+            })
+            .from(teacherQualification)
+            .where(and(
+                eq(teacherQualification.teacherId, userId),
+                eq(teacherQualification.qualification, qualification)
+            ))
+            .limit(1)
 
             return {
                 status: 200,
@@ -169,15 +175,18 @@ class teacherQualificationService {
                 qualification: qualification
             }
 
-            const newQuali = await db.update(teacherQualification)
+            await db.update(teacherQualification)
                     .set(teacherQualificationData)
                     .where(eq(teacherQualification.teacherId, userId))
-                    .returning(
-                        {
-                            teacherId: teacherQualification.teacherId,
-                            qualification: teacherQualification.qualification
-                        }
-                    )
+
+            // Query lại để lấy dữ liệu đã update
+            const newQuali = await db.select({
+                teacherId: teacherQualification.teacherId,
+                qualification: teacherQualification.qualification
+            })
+            .from(teacherQualification)
+            .where(eq(teacherQualification.teacherId, userId))
+            .limit(1)
 
             return {
                 status: 200,

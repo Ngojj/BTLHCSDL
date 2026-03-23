@@ -74,20 +74,16 @@ class courseTopicService {
                 //     }
                 // }
                 // create course topic
-                const newCourseTopic = yield db_1.db.insert(schema_1.courseTopic)
+                yield db_1.db.insert(schema_1.courseTopic)
                     .values({
                     courseId: courseId,
                     topic: topic
-                })
-                    .returning({
-                    courseId: schema_1.courseTopic.courseId,
-                    topic: schema_1.courseTopic.topic
                 });
                 return {
                     message: "Successfully created course topic",
                     data: {
-                        courseId: newCourseTopic[0].courseId,
-                        topic: newCourseTopic[0].topic
+                        courseId,
+                        topic
                     },
                     status: 200
                 };
@@ -113,20 +109,16 @@ class courseTopicService {
                     };
                 }
                 // update course topic
-                const updateCourseTopic = yield db_1.db.update(schema_1.courseTopic)
+                yield db_1.db.update(schema_1.courseTopic)
                     .set({
                     topic: topic
                 })
-                    .where((0, drizzle_orm_1.eq)(schema_1.courseTopic.courseId, courseId))
-                    .returning({
-                    courseId: schema_1.courseTopic.courseId,
-                    topic: schema_1.courseTopic.topic
-                });
+                    .where((0, drizzle_orm_1.eq)(schema_1.courseTopic.courseId, courseId));
                 return {
                     message: "Successfully updated course topic",
                     data: {
-                        courseId: updateCourseTopic[0].courseId,
-                        topic: updateCourseTopic[0].topic
+                        courseId,
+                        topic
                     },
                     status: 200
                 };

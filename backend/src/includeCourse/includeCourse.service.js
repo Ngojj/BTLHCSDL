@@ -142,11 +142,6 @@ class includeCourseService {
                     rmId: includeCourseDto.rmId,
                     courseId: includeCourseDto.courseId,
                     order: includeCourseDto.order
-                })
-                    .returning({
-                    rmId: schema_1.includeCourse.rmId,
-                    courseId: schema_1.includeCourse.courseId,
-                    order: schema_1.includeCourse.order
                 });
                 return {
                     message: "IncludeCourse created",

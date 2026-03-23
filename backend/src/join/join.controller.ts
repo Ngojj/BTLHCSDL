@@ -82,28 +82,69 @@ class joinController {
     }
 
     public async updateJoin(req: Request, res: Response) {
-        try {
-            const response = await joinService.updateJoin(req.body);
+        const { courseId, studentId, progress, GPA, dateComplete, dateStart } = req.body;
 
-            return res.status(response.status).send(response);
-        } catch (error) {
-            return {
-                message: error,
+        if (!courseId || !studentId || progress === undefined) {
+            return res.status(400).json({
+                message: "Thiếu thông tin bắt buộc: courseId, studentId, progress",
+                status: 400
+            });
+        }
+
+        // Validate progress
+        if (progress < 0 || progress > 100) {
+            return res.status(400).json({
+                message: "Tiến độ phải từ 0 đến 100",
+                status: 400
+            });
+        }
+
+        // Validate GPA
+        if (GPA !== null && GPA !== undefined && (GPA < 0 || GPA > 10)) {
+            return res.status(400).json({
+                message: "GPA phải từ 0 đến 10",
+                status: 400
+            });
+        }
+
+        try {
+            const response = await joinService.updateJoin({
+                courseId: Number(courseId),
+                studentId: Number(studentId),
+                progress: Number(progress),
+                GPA: GPA !== null && GPA !== undefined ? Number(GPA) : null,
+                dateComplete: dateComplete || null,
+                dateStart: dateStart || new Date().toISOString().split('T')[0]
+            });
+
+            return res.status(response.status).json(response);
+        } catch (error: any) {
+            return res.status(500).json({
+                message: error?.message || "Lỗi server khi cập nhật",
                 status: 500
-            }
+            });
         }
     }
 
     public async deleteJoin(req: Request, res: Response) {
-        try {
-            const response = await joinService.deleteJoin(Number(req.params.courseId), Number(req.params.studentId));
+        const { courseId, studentId } = req.params;
 
-            return res.status(response.status).send(response);
-        } catch (error) {
-            return {
-                message: error,
+        if (!courseId || !studentId) {
+            return res.status(400).json({
+                message: "Thiếu courseId hoặc studentId",
+                status: 400
+            });
+        }
+
+        try {
+            const response = await joinService.deleteJoin(Number(courseId), Number(studentId));
+
+            return res.status(response.status).json(response);
+        } catch (error: any) {
+            return res.status(500).json({
+                message: error?.message || "Lỗi server khi xóa",
                 status: 500
-            }
+            });
         }
     }
 }

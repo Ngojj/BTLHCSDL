@@ -9,7 +9,7 @@ import joinService from "../join/join.service"
 class StudentService{
 
     private generateUniqueStudentId =  async (id: number) => {
-        let uniqueId: string = 'SV'
+        let uniqueId: string = 'ST'
     
         const lenId : number = id.toString().length
 
@@ -136,6 +136,16 @@ class StudentService{
         }
     }
 
+    public decreaseNumberOfCourseEnroll = async (studentId: number) => {
+        // Gọi lại update để đếm lại từ database
+        await this.updateNumberOfCourseEnroll(studentId);
+    }
+
+    public decreaseNumberOfCourseComplete = async (studentId: number) => {
+        // Gọi lại update để đếm lại từ database
+        await this.updateNumberOfCourseComplete(studentId);
+    }
+
     public updateStudent = async (
         id: number,
         firstName: string,
@@ -186,6 +196,5 @@ class StudentService{
 }
 
 export default new StudentService()
-
 
 

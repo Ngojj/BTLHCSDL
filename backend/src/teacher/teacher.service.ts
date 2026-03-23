@@ -7,7 +7,7 @@ import authService from "../auth/auth.service"
 class TeacherService {
     
     private generateUniqueTeacherId =  async (id: number) => {
-        let uniqueId: string = 'GV'
+        let uniqueId: string = 'TC'
     
         const lenId : number = id.toString().length
 
@@ -105,18 +105,19 @@ class TeacherService {
 
         const teacherId = await this.generateUniqueTeacherId(newUser[0].id)
 
-        const newTeacher = await db
-        .insert(teacher)
-        .values(
-            {
-                userId: newUser[0].id,
-                teacherId: teacherId,
-            }
-        )
-        .returning({
+        await db.insert(teacher)
+                .values({
+                    userId: newUser[0].id,
+                    teacherId: teacherId,
+                })
+
+        // Query lại để lấy dữ liệu đã insert
+        const newTeacher = await db.select({
             userId: teacher.userId,
             teacherId: teacher.teacherId
         })
+        .from(teacher)
+        .where(eq(teacher.userId, newUser[0].id))
 
         if (!newTeacher || newTeacher.length === 0){
             console.log('error teacher')
@@ -155,15 +156,18 @@ class TeacherService {
         if(!updateUser || updateUser.length === 0){
             return null
         }
-        const updateTeacher = await db
-        .update(teacher)
-        .set({
-            userId: updateUser[0].id
-        })
-        .where(eq(teacher.userId, id))
-        .returning({
+        await db.update(teacher)
+                .set({
+                    userId: updateUser[0].id
+                })
+                .where(eq(teacher.userId, id))
+
+        // Query lại để lấy dữ liệu đã update
+        const updateTeacher = await db.select({
             teacherId: teacher.teacherId,
         })
+        .from(teacher)
+        .where(eq(teacher.userId, id))
 
         if(!updateTeacher || updateTeacher.length === 0){
             return null
@@ -182,18 +186,21 @@ class TeacherService {
     }
 
     public deleteTeacher = async (id: number) => {
-        const teacherToDelete = await db
-        .delete(teacher)
-        .where(eq(teacher.userId, id))
-        .returning({
+        // Lấy thông tin teacher trước khi xóa
+        const teacherInfo = await db.select({
             teacherId: teacher.teacherId,
         })
+        .from(teacher)
+        .where(eq(teacher.userId, id))
 
-        if(!teacherToDelete || teacherToDelete.length === 0){
+        if(!teacherInfo || teacherInfo.length === 0){
             return null
         }
 
-        const userToDelete = await userService.deleteUser(id, teacherToDelete)
+        await db.delete(teacher)
+                .where(eq(teacher.userId, id))
+
+        const userToDelete = await userService.deleteUser(id, teacherInfo)
 
         if(!userToDelete){
             return null

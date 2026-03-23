@@ -101,29 +101,64 @@ class joinController {
     }
     updateJoin(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
+            const { courseId, studentId, progress, GPA, dateComplete, dateStart } = req.body;
+            if (!courseId || !studentId || progress === undefined) {
+                return res.status(400).json({
+                    message: "Thiếu thông tin bắt buộc: courseId, studentId, progress",
+                    status: 400
+                });
+            }
+            // Validate progress
+            if (progress < 0 || progress > 100) {
+                return res.status(400).json({
+                    message: "Tiến độ phải từ 0 đến 100",
+                    status: 400
+                });
+            }
+            // Validate GPA
+            if (GPA !== null && GPA !== undefined && (GPA < 0 || GPA > 10)) {
+                return res.status(400).json({
+                    message: "GPA phải từ 0 đến 10",
+                    status: 400
+                });
+            }
             try {
-                const response = yield join_service_1.default.updateJoin(req.body);
-                return res.status(response.status).send(response);
+                const response = yield join_service_1.default.updateJoin({
+                    courseId: Number(courseId),
+                    studentId: Number(studentId),
+                    progress: Number(progress),
+                    GPA: GPA !== null && GPA !== undefined ? Number(GPA) : null,
+                    dateComplete: dateComplete || null,
+                    dateStart: dateStart || new Date().toISOString().split('T')[0]
+                });
+                return res.status(response.status).json(response);
             }
             catch (error) {
-                return {
-                    message: error,
+                return res.status(500).json({
+                    message: (error === null || error === void 0 ? void 0 : error.message) || "Lỗi server khi cập nhật",
                     status: 500
-                };
+                });
             }
         });
     }
     deleteJoin(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
+            const { courseId, studentId } = req.params;
+            if (!courseId || !studentId) {
+                return res.status(400).json({
+                    message: "Thiếu courseId hoặc studentId",
+                    status: 400
+                });
+            }
             try {
-                const response = yield join_service_1.default.deleteJoin(Number(req.params.courseId), Number(req.params.studentId));
-                return res.status(response.status).send(response);
+                const response = yield join_service_1.default.deleteJoin(Number(courseId), Number(studentId));
+                return res.status(response.status).json(response);
             }
             catch (error) {
-                return {
-                    message: error,
+                return res.status(500).json({
+                    message: (error === null || error === void 0 ? void 0 : error.message) || "Lỗi server khi xóa",
                     status: 500
-                };
+                });
             }
         });
     }

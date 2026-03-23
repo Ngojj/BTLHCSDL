@@ -140,11 +140,6 @@ class includeCourseService {
                 courseId: includeCourseDto.courseId,
                 order: includeCourseDto.order
             })
-            .returning({
-                rmId: includeCourse.rmId,
-                courseId: includeCourse.courseId,
-                order: includeCourse.order
-            })
 
             return {
                 message: "IncludeCourse created",

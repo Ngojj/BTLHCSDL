@@ -1,31 +1,35 @@
-import React from 'react';
-
 const Footer = () => {
   return (
-    <footer className="fixed bg-gradient-to-r from-blue-800 to-gray-900 text-white py-10 px-6">
-      <div className="max-w-5xl mx-auto">
-        <h1 className="text-3xl font-extrabold mb-4 text-center tracking-wide">
-          CO2014 - DATABASE SYSTEM
-        </h1>
-        <h2 className="text-xl font-semibold mb-2 text-center">
-          Contributor:
-        </h2>
-        <ul className="list-none flex flex-wrap justify-center gap-4 text-lg">
-          <li className="bg-blue-700 hover:bg-blue-600 rounded-full px-4 py-2 transition duration-300">
-            Nguyễn Minh Triết
-          </li>
-          <li className="bg-blue-700 hover:bg-blue-600 rounded-full px-4 py-2 transition duration-300">
-            Lâm Vũ
-          </li>
-          <li className="bg-blue-700 hover:bg-blue-600 rounded-full px-4 py-2 transition duration-300">
-            Trần Trung Nhựt
-          </li>
-          <li className="bg-blue-700 hover:bg-blue-600 rounded-full px-4 py-2 transition duration-300">
-            Võ Quang Đại Việt
-          </li>
-        </ul>
-        <div className="mt-6 text-center text-gray-400 text-sm">
-          © {new Date().getFullYear()} All Rights Reserved.
+    <footer className="mt-20 border-t border-slate-200 bg-white/90">
+      <div className="section-shell py-12">
+        <div className="grid gap-10 lg:grid-cols-[1.2fr_0.8fr]">
+          <div className="space-y-4">
+            <span className="inline-flex rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-sky-700">
+              CO2014 Database System
+            </span>
+            <h2 className="max-w-2xl text-2xl font-semibold tracking-tight text-slate-900">
+              Giao diện học tập rõ ràng, gọn gàng và phù hợp với một hệ thống e-learning dùng hằng ngày.
+            </h2>
+            <p className="max-w-2xl text-sm leading-7 text-slate-600">
+              Hệ thống ưu tiên tính dễ dùng trong điều hướng, quản lý khóa học, bài giảng, quiz và lộ trình học
+              để người học lẫn giảng viên đều thao tác thuận tiện hơn.
+            </p>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Định hướng</p>
+              <p className="mt-2 text-sm leading-6 text-slate-700">
+                Thiết kế tối giản, dễ đọc, nhấn mạnh vào dữ liệu học tập thay vì hiệu ứng.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Mục tiêu</p>
+              <p className="mt-2 text-sm leading-6 text-slate-700">
+                Tạo trải nghiệm đủ chuyên nghiệp để có thể dùng như một cổng học tập thực tế.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </footer>

@@ -21,7 +21,7 @@ const join_service_1 = __importDefault(require("../join/join.service"));
 class StudentService {
     constructor() {
         this.generateUniqueStudentId = (id) => __awaiter(this, void 0, void 0, function* () {
-            let uniqueId = 'SV';
+            let uniqueId = 'ST';
             const lenId = id.toString().length;
             for (let i = 0; i < 8 - lenId; i++) {
                 uniqueId += '0';
@@ -115,6 +115,14 @@ class StudentService {
             catch (e) {
                 console.log(e);
             }
+        });
+        this.decreaseNumberOfCourseEnroll = (studentId) => __awaiter(this, void 0, void 0, function* () {
+            // Gọi lại update để đếm lại từ database
+            yield this.updateNumberOfCourseEnroll(studentId);
+        });
+        this.decreaseNumberOfCourseComplete = (studentId) => __awaiter(this, void 0, void 0, function* () {
+            // Gọi lại update để đếm lại từ database
+            yield this.updateNumberOfCourseComplete(studentId);
         });
         this.updateStudent = (id, firstName, lastName, email, bankName, bankAccount) => __awaiter(this, void 0, void 0, function* () {
             const updateUser = yield user_service_1.default.updateUser(id, firstName, lastName, email, bankName, bankAccount);

@@ -1,7 +1,13 @@
 'use server';
 
-import mediaUpload from "@/lib/upload-image";
+import { uploadFile } from "@/lib/upload-image";
 
 export default async function CreateFile(formData: FormData) {
-    return await mediaUpload(formData, 'file/create');
+    const file = formData.get('file');
+
+    if (!(file instanceof File)) {
+        throw new Error('No file provided');
+    }
+
+    return await uploadFile(file);
 }

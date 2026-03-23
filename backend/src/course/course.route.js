@@ -10,6 +10,8 @@ const router = (0, express_1.Router)();
 router.get('/', course_controller_1.default.getAllCourses);
 // get all courses with teacher info
 router.get('/teacher', course_controller_1.default.getAllCourseWithTeacherInfo);
+// debug: get all courses (raw data)
+router.get('/debug', course_controller_1.default.debugAllCourses);
 router.get('/teacher/');
 // get all courses by teacher id
 router.get('/teacherId/:teacherId', course_controller_1.default.getAllCourseByTeacherId);

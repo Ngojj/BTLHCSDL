@@ -6,15 +6,14 @@ import { userLoginState } from "@/state";
 import React, { useEffect, useState } from "react";
 import { useRecoilState } from "recoil";
 
-
 const Roadmap = ({ roadmap }: { roadmap: RoadmapShowForStudentDto | null }) => {
     const [courses, setCourses] = useState<CourseWithTeacherNameDto[]>([])
     const [joins, setJoins] = useState<{ [key: string]: number}>({})
     const [userLogin, setUserLogin] = useRecoilState(userLoginState)
+
     const fetchCourse = async () => {
         try {
             const response = await request.get(`/includeCourse/rmId/${roadmap?.id}`)
-
             setCourses(response.data.data)
         } catch (error) {
             console.log(error)
@@ -24,7 +23,6 @@ const Roadmap = ({ roadmap }: { roadmap: RoadmapShowForStudentDto | null }) => {
     const fetchJoin = async () => {
         try {
             const response = await request.get(`/join/studentId/${userLogin.id}`)
-
             const tmp: { [key: string]: number } = {};
 
             for(const join of response.data.data) {
@@ -32,7 +30,6 @@ const Roadmap = ({ roadmap }: { roadmap: RoadmapShowForStudentDto | null }) => {
             }
 
             setJoins(tmp)
-            console.log(tmp)
         } catch (error) {
             console.log(error)
         }
@@ -46,92 +43,124 @@ const Roadmap = ({ roadmap }: { roadmap: RoadmapShowForStudentDto | null }) => {
     }, [])
 
     useEffect(() => {
+        if (!userLogin.id) return
         fetchJoin()
     }, [userLogin])
+
+    const getStatus = (courseId: string) => {
+        const progress = joins[courseId]
+
+        if (progress === undefined) {
+            return {
+                dot: "bg-rose-500",
+                label: "Chưa đăng ký"
+            }
+        }
+
+        if (progress === 100) {
+            return {
+                dot: "bg-emerald-500",
+                label: "Đã hoàn thành"
+            }
+        }
+
+        return {
+            dot: "bg-amber-500",
+            label: `Đang học ${progress}%`
+        }
+    }
+
   return (
-    <div className="p-4 h-full relative">
-      <div>
-        <button
-          type="button"
-          className="border-2 px-4 py-2 rounded border-gray-300 text-gray-300 hover:scale-110 active:scale-90"
-          onClick={() => {
-            window.history.back();
-          }}
-        >
-          <b>Quay lại</b>
-        </button>
-      </div>
-      <p className="text-center font-bold text-5xl text-white">{roadmap?.name}</p>
-      <div className="w-full mt-2 text-white">
-        <p className="text-center text-lg">
-          <u>Giảng viên phụ trách lộ trình:</u> <b>{roadmap?.teacherFirstName} {roadmap?.teacherLastName}</b>
-        </p>
-        <p className="text-center text-sm mt-2">
-          <u>Hướng dẫn học tập:</u> <i>{roadmap?.description}</i>
-        </p>
-      </div>
-      <div className="flex flex-col grid-cols-9 p-2 mx-auto md:grid mt-2">
-        {courses.map((course, index) => {
-          console.log(course.courseId)
-          const circleColor = joins[course.courseId] === undefined  
-            ? "bg-red-500" 
-            : joins[course.courseId] === 100
-            ? "bg-green-500" 
-            : "bg-yellow-500"; 
+    <div className="section-shell py-10 sm:py-14">
+      <div className="rounded-[34px] border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+          <div className="max-w-3xl">
+            <button
+              type="button"
+              className="button-secondary"
+              onClick={() => {
+                window.history.back();
+              }}
+            >
+              Quay lại
+            </button>
 
-          return index % 2 === 0 ? (
-            <div key={index} className="flex md:contents flex-row-reverse">
-              <div
-                className="relative p-4 my-6 text-gray-800 bg-white border-white border rounded-xl col-start-1 col-end-5 mr-auto md:mr-0 md:ml-auto"
-              >
-                <h3 className="text-lg font-semibold lg:text-xl">{course.courseName}</h3>
-                <p className="mt-2 leading-6">{course.teacherFirstName} {course.teacherLastName}</p>
-                <span className="absolute text-sm text-indigo-100/75 -top-5 left-2 whitespace-nowrap">
-                    {course.creationTime ? new Date(course.creationTime).toISOString().split('T')[0] : ''}                
-                </span>
+            <span className="mt-6 inline-flex rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-sky-700">
+              Roadmap Detail
+            </span>
+            <h1 className="mt-4 text-4xl font-semibold tracking-tight text-slate-900">
+              {roadmap?.name}
+            </h1>
+            <p className="mt-4 text-sm leading-7 text-slate-600 sm:text-base">
+              <span className="font-semibold text-slate-800">Giảng viên phụ trách:</span>{" "}
+              {roadmap?.teacherFirstName} {roadmap?.teacherLastName}
+            </p>
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
+              {roadmap?.description}
+            </p>
+          </div>
+
+          <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5 lg:min-w-[280px]">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Chú thích</p>
+            <div className="mt-4 space-y-3 text-sm text-slate-700">
+              <div className="flex items-center gap-3">
+                <span className="h-3.5 w-3.5 rounded-full bg-emerald-500" />
+                <span>Đã học xong</span>
               </div>
-              <div className="relative col-start-5 col-end-6 mr-7 md:mx-auto">
-                <div className="flex items-center justify-center w-6 h-full">
-                  <div className="w-1 h-full bg-white"></div>
-                </div>
-                <div className={`absolute w-6 h-6 -mt-3 ${circleColor} border-4 border-white rounded-full top-1/2`}></div>
+              <div className="flex items-center gap-3">
+                <span className="h-3.5 w-3.5 rounded-full bg-amber-500" />
+                <span>Đã đăng ký nhưng chưa hoàn thành</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="h-3.5 w-3.5 rounded-full bg-rose-500" />
+                <span>Chưa đăng ký</span>
               </div>
             </div>
-          ) : (
-            <div key={index} className="flex md:contents">
-              <div className="relative col-start-5 col-end-6 mr-7 md:mx-auto">
-                <div className="flex items-center justify-center w-6 h-full">
-                  <div className="w-1 h-full bg-white"></div>
-                </div>
-                <div className={`absolute w-6 h-6 -mt-3 ${circleColor} border-4 border-white rounded-full top-1/2`}></div>
-              </div>
-              <div
-                className="relative p-4 my-6 text-gray-800 bg-white border-white border rounded-xl col-start-6 col-end-10 mr-auto"
-              >
-                <h3 className="text-lg font-semibold lg:text-xl">{course.courseName}</h3>
-                <p className="mt-2 leading-6">{course.teacherFirstName} {course.teacherLastName}</p>
-                <span className="absolute text-sm text-indigo-100/75 -top-5 left-2 whitespace-nowrap">
-                    {course.creationTime ? new Date(course.creationTime).toISOString().split('T')[0] : ''}
-                </span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+          </div>
+        </div>
 
-      <div className="absolute top-4 right-4 bg-gray-800 text-white p-4 rounded shadow-md">
-        <p className="font-bold text-sm">Chú thích:</p>
-        <div className="flex items-center mt-2">
-          <span className="w-4 h-4 bg-green-500 rounded-full inline-block mr-2 "></span>
-          <p className="text-sm">Đã học xong</p>
-        </div>
-        <div className="flex items-center mt-2">
-          <span className="w-4 h-4 bg-yellow-500 rounded-full inline-block mr-2"></span>
-          <p className="text-sm">Đã đăng ký nhưng chưa học xong</p>
-        </div>
-        <div className="flex items-center mt-2">
-          <span className="w-4 h-4 bg-red-500 rounded-full inline-block mr-2"></span>
-          <p className="text-sm">Chưa đăng ký</p>
+        <div className="mt-10 space-y-6">
+          {courses.map((course, index) => {
+            const status = getStatus(course.courseId)
+
+            return (
+              <div key={index} className="grid gap-4 lg:grid-cols-[72px_1fr]">
+                <div className="hidden items-start justify-center lg:flex">
+                  <div className="flex h-full flex-col items-center">
+                    <div className={`h-5 w-5 rounded-full border-4 border-white shadow ${status.dot}`} />
+                    {index < courses.length - 1 && <div className="mt-2 h-full w-1 rounded-full bg-slate-200" />}
+                  </div>
+                </div>
+
+                <div className="rounded-[26px] border border-slate-200 bg-slate-50 p-5">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                        Bước {index + 1}
+                      </p>
+                      <h3 className="mt-2 text-xl font-semibold text-slate-900">{course.courseName}</h3>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">
+                        Giảng viên: {course.teacherFirstName} {course.teacherLastName}
+                      </p>
+                      <p className="mt-1 text-sm leading-6 text-slate-500">
+                        Ngày tạo: {course.creationTime ? new Date(course.creationTime).toLocaleDateString('vi-VN') : ""}
+                      </p>
+                    </div>
+
+                    <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                      status.dot === "bg-emerald-500"
+                        ? "bg-emerald-50 text-emerald-700"
+                        : status.dot === "bg-amber-500"
+                        ? "bg-amber-50 text-amber-700"
+                        : "bg-rose-50 text-rose-700"
+                    }`}>
+                      {status.label}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
         </div>
       </div>
     </div>

@@ -2,78 +2,118 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: Arial, Helvetica, sans-serif;
-  user-select: none;
+@layer base {
+  :root {
+    --background: 204 43% 98%;
+    --foreground: 213 38% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 213 38% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 213 38% 15%;
+    --primary: 211 85% 34%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 204 48% 94%;
+    --secondary-foreground: 213 38% 18%;
+    --muted: 204 31% 92%;
+    --muted-foreground: 215 16% 39%;
+    --accent: 211 35% 92%;
+    --accent-foreground: 213 38% 15%;
+    --destructive: 0 74% 52%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 205 27% 86%;
+    --input: 205 27% 86%;
+    --ring: 211 85% 34%;
+    --chart-1: 211 85% 34%;
+    --chart-2: 211 60% 45%;
+    --chart-3: 213 30% 55%;
+    --chart-4: 215 20% 65%;
+    --chart-5: 217 18% 75%;
+    --radius: 1.25rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-geist-sans), "Segoe UI", sans-serif;
+    background-image:
+      radial-gradient(circle at top left, rgba(14, 116, 210, 0.08), transparent 24%),
+      radial-gradient(circle at bottom right, rgba(15, 23, 42, 0.04), transparent 20%),
+      linear-gradient(180deg, #f8fbff 0%, #f3f6fa 42%, #f8fbff 100%);
+    min-height: 100vh;
+  }
+
+  ::selection {
+    background: rgba(14, 116, 210, 0.18);
+  }
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
-}
 
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(10px);
   }
-  .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+
+  .section-shell {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+
+  .hero-grid {
+    background-image:
+      linear-gradient(rgba(14, 116, 210, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(14, 116, 210, 0.05) 1px, transparent 1px);
+    background-size: 32px 32px;
   }
 }
 
-@layer base {
-  * {
-    @apply border-border;
+@keyframes float-gentle {
+  0%, 100% {
+    transform: translateY(0px);
   }
-  body {
-    @apply bg-background text-foreground;
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes fade-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@layer components {
+  .animate-float-gentle {
+    animation: float-gentle 5s ease-in-out infinite;
+  }
+
+  .animate-fade-slide-up {
+    animation: fade-slide-up 0.7s ease-out both;
+  }
+
+  .button-primary {
+    @apply inline-flex items-center justify-center rounded-xl bg-sky-800 px-5 py-3 text-sm font-semibold text-white shadow-sm transition duration-300 hover:bg-sky-900 hover:shadow-md;
+  }
+
+  .button-secondary {
+    @apply inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition duration-300 hover:border-slate-300 hover:bg-slate-50;
+  }
+
+  .section-title {
+    @apply text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl;
   }
 }

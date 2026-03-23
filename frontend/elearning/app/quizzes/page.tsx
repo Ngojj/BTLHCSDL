@@ -18,8 +18,8 @@ const Home = () => {
   const [questions, setQuestions] = useState<QuestionDto[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState<{ [key: number]: string }>({});
-  const [isPopupOpen, setIsPopupOpen] = useState(false); // Trạng thái pop-up
-  const [score, setScore] = useState(0); // Điểm số
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [score, setScore] = useState(0);
 
   const fetchQuestions = async () => {
     try {
@@ -27,6 +27,7 @@ const Home = () => {
       setQuestions(response.data);
     } catch (error: any) {
       console.log(error);
+      setQuestions([]);
     }
   };
 
@@ -57,13 +58,15 @@ const Home = () => {
       }));
     } catch (e) {
       console.log(e);
-      alert("Server đang gặp sự cố! Vui lòng thử lại!");
+      alert("Máy chủ đang gặp sự cố. Vui lòng thử lại.");
     }
   };
 
+  const currentQuestion = questions[currentQuestionIndex];
+
   const handleNext = () => {
-    if (!userAnswers[currentQuestion.id]) {
-      alert("Vui lòng chọn câu trả lời trước khi sang câu tiếp theo!");
+    if (!currentQuestion || !userAnswers[currentQuestion.id]) {
+      alert("Vui lòng chọn câu trả lời trước khi sang câu tiếp theo.");
       return;
     }
 
@@ -83,7 +86,7 @@ const Home = () => {
     if (!confirm) return;
 
     try {
-      let numberOfCorrect: number = 0;
+      let numberOfCorrect = 0;
 
       for (const question of questions) {
         if (userAnswers[question.id] === question.answer) {
@@ -92,7 +95,7 @@ const Home = () => {
       }
 
       const calculatedScore = (numberOfCorrect / questions.length) * 10;
-      setScore(calculatedScore); 
+      setScore(calculatedScore);
 
       const dOResponse = await request.get(`/dO/quiz/${quiz?.id}/student/${user.id}`);
       await request.post(`/dO/create`, {
@@ -104,89 +107,133 @@ const Home = () => {
 
       setIsPopupOpen(true);
     } catch (error) {
-      alert("Server xảy ra lỗi! Vui lòng thử lại!");
+      alert("Máy chủ xảy ra lỗi. Vui lòng thử lại.");
       console.log(error);
     }
   };
-
-  const currentQuestion = questions[currentQuestionIndex];
 
   useEffect(() => {
     fetchQuestions();
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-r from-blue-300 to-blue-500">
-      {currentQuestion && (
-        currentQuestion.type === 'multiple choice' ? (
-          <Quiz
-          id={currentQuestion.id}
-          question={currentQuestion.content}
-          onAnswerSelect={handleAnswerSelect}
-          selectedAnswer={userAnswers[currentQuestion.id] || ""}
-        />
-        ) : (
-          <FillInTheBlank
-          id={currentQuestion.id}
-          question={currentQuestion.content}
-          onAnswerSelect={handleAnswerSelect}
-          selectedAnswer={userAnswers[currentQuestion.id] || ""}/>
-        )
-      )}
-      <div className="flex items-center justify-between w-full max-w-3xl bg-white py-2 px-2">
-        <button
-          onClick={handlePrevious}
-          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:scale-110 active:scale-90"
-          disabled={currentQuestionIndex === 0}
-        >
-          Trang trước
-        </button>
-        <div>
-          <p>Câu hỏi: {currentQuestionIndex + 1}/{questions.length}</p>
+    <main className="section-shell py-10 sm:py-14">
+      <div className="rounded-[34px] border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+        <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <span className="inline-flex rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-sky-700">
+              Quiz Session
+            </span>
+            <h1 className="mt-4 text-4xl font-semibold tracking-tight text-slate-900">
+              {quiz?.name || "Làm quiz"}
+            </h1>
+            <p className="mt-3 text-sm leading-7 text-slate-600">
+              Trả lời lần lượt từng câu hỏi và theo dõi tiến độ làm bài trong một giao diện tập trung hơn.
+            </p>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-center">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Câu hiện tại</p>
+              <p className="mt-2 text-3xl font-semibold text-slate-900">
+                {questions.length > 0 ? currentQuestionIndex + 1 : 0}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-center">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Tổng câu hỏi</p>
+              <p className="mt-2 text-3xl font-semibold text-slate-900">{questions.length}</p>
+            </div>
+          </div>
         </div>
-        <button
-          onClick={handleNext}
-          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:scale-110 active:scale-90"
-          disabled={currentQuestionIndex === questions.length - 1}
-        >
-          Trang tiếp
-        </button>
-      </div>
-      {currentQuestionIndex === questions.length - 1 && (
-        <div className="bg-white w-full max-w-3xl flex items-center justify-center pb-2">
+
+        <div className="mb-6 rounded-full bg-slate-100 p-1">
+          <div
+            className="h-2.5 rounded-full bg-sky-700 transition-all"
+            style={{
+              width: `${questions.length > 0 ? ((currentQuestionIndex + 1) / questions.length) * 100 : 0}%`,
+            }}
+          />
+        </div>
+
+        <div className="rounded-[28px] border border-slate-200 bg-slate-50 p-4 sm:p-6">
+          {currentQuestion && (
+            currentQuestion.type === 'multiple choice' ? (
+              <Quiz
+                id={currentQuestion.id}
+                question={currentQuestion.content}
+                onAnswerSelect={handleAnswerSelect}
+                selectedAnswer={userAnswers[currentQuestion.id] || ""}
+              />
+            ) : (
+              <FillInTheBlank
+                id={currentQuestion.id}
+                question={currentQuestion.content}
+                onAnswerSelect={handleAnswerSelect}
+                selectedAnswer={userAnswers[currentQuestion.id] || ""}
+              />
+            )
+          )}
+        </div>
+
+        <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <button
-            onClick={handleSubmit}
-            className="mt-4 px-6 py-2 text-blue-500 border-2 border-blue-500 rounded-lg hover:scale-110 active:scale-90"
+            onClick={handlePrevious}
+            className="button-secondary"
+            disabled={currentQuestionIndex === 0}
           >
-            Gửi bài
+            Câu trước
+          </button>
+          <p className="text-sm font-medium text-slate-500">
+            Câu hỏi {questions.length > 0 ? currentQuestionIndex + 1 : 0}/{questions.length}
+          </p>
+          <button
+            onClick={handleNext}
+            className="button-primary"
+            disabled={currentQuestionIndex === questions.length - 1}
+          >
+            Câu tiếp theo
           </button>
         </div>
-      )}
+
+        {currentQuestionIndex === questions.length - 1 && questions.length > 0 && (
+          <div className="mt-6 flex justify-center">
+            <button
+              onClick={handleSubmit}
+              className="rounded-2xl border border-sky-200 bg-sky-50 px-6 py-3 text-sm font-semibold text-sky-700 transition hover:bg-sky-100"
+            >
+              Nộp bài
+            </button>
+          </div>
+        )}
+      </div>
 
       {isPopupOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50">
-          <div className="bg-gradient-to-r from-blue-500 to-blue-700 p-8 rounded-3xl shadow-2xl w-full max-w-md text-white text-center">
-            <div className="bg-white text-black rounded-lg p-6 shadow-inner mb-6">
-              <p className="text-lg">Điểm số của bạn:</p>
-              <span className="text-4xl font-bold text-gradient bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-800">
-                {score}
-              </span>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-[30px] border border-slate-200 bg-white p-8 text-center shadow-2xl">
+            <span className="inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
+              Quiz Completed
+            </span>
+            <h2 className="mt-4 text-3xl font-semibold text-slate-900">Kết quả của bạn</h2>
+            <div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-6">
+              <p className="text-sm text-slate-500">Điểm số</p>
+              <p className="mt-2 text-5xl font-semibold text-sky-700">{score.toFixed(2)}</p>
             </div>
-            <p className="text-sm italic mb-4">Hãy cố gắng hơn nữa nhé, bạn đang làm rất tốt!</p>
+            <p className="mt-5 text-sm leading-6 text-slate-600">
+              Kết quả đã được lưu. Bạn có thể quay lại khóa học để tiếp tục học hoặc xem lại tiến độ.
+            </p>
             <button
               onClick={() => {
                 setIsPopupOpen(false);
                 window.history.back();
               }}
-              className="px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-500 text-white font-semibold rounded-full shadow-lg hover:scale-110 active:scale-95 transform transition-transform duration-200"
+              className="button-primary mt-6 w-full"
             >
-              Thoát
+              Hoàn tất
             </button>
           </div>
         </div>
-      
       )}
-    </div>
+    </main>
   );
 };
 

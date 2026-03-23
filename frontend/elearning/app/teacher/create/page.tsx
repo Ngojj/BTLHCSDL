@@ -1,242 +1,252 @@
 'use client';
 
+import { post } from '@/app/axios/axios';
 import { userLoginState } from '@/state';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRecoilValue } from 'recoil';
-
 
 const CreateCourse = () => {
   const [courseName, setCourseName] = useState('');
   const [language, setLanguage] = useState('Vietnamese');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState<number>(0);
-  const [averageQuizScore, setAverageQuizScore] = useState('');
+  const [averageQuizScore, setAverageQuizScore] = useState('0');
   const [topics, setTopics] = useState<string[]>([]);
-  const [currentTopic, setCurrentTopic] = useState<string>('');
-  const [certiName, setCertiName] = useState<string>('');
+  const [currentTopic, setCurrentTopic] = useState('');
+  const [certiName, setCertiName] = useState('');
   const [expirationTime, setExpirationTime] = useState<number>(0);
-  const user = useRecoilValue(userLoginState)
-  
+  const user = useRecoilValue(userLoginState);
+  const router = useRouter();
+
   const handleAddTopic = () => {
-    if (currentTopic.trim() && !topics.includes(currentTopic)) {
-      setTopics([...topics, currentTopic]);
+    const normalizedTopic = currentTopic.trim();
+
+    if (normalizedTopic && !topics.includes(normalizedTopic)) {
+      setTopics((prev) => [...prev, normalizedTopic]);
       setCurrentTopic('');
     }
   };
 
-  
+  const handleRemoveTopic = (topicToRemove: string) => {
+    setTopics((prev) => prev.filter((topic) => topic !== topicToRemove));
+  };
+
   const handleAddCourse = async () => {
-    if(!courseName || !description || !price || !averageQuizScore || topics.length === 0) {
-      alert('Vui lòng điền đầy đủ thông tin!');
+    const normalizedCourseName = courseName.trim();
+    const normalizedDescription = description.trim();
+    const normalizedTopics = topics.map((topic) => topic.trim()).filter(Boolean);
+    const normalizedPrice = Number(price);
+    const normalizedAvgQuiz = Number(averageQuizScore);
+
+    if (!normalizedCourseName || !normalizedDescription || normalizedTopics.length === 0) {
+      alert('Vui lòng điền đầy đủ các trường bắt buộc.');
       return;
     }
-    try{
-      if (user.token === undefined || user.token === "") {
-        alert('Vui lòng đăng nhập để tạo khóa học');
+
+    if (Number.isNaN(normalizedPrice) || normalizedPrice < 0) {
+      alert('Học phí không hợp lệ.');
+      return;
+    }
+
+    if (Number.isNaN(normalizedAvgQuiz) || normalizedAvgQuiz < 0) {
+      alert('Điểm quiz trung bình không hợp lệ.');
+      return;
+    }
+
+    try {
+      if (!user.token) {
+        alert('Vui lòng đăng nhập để tạo khóa học.');
         return;
       }
-      console.log(user)
-      const response = await axios.post('http://localhost:4000/course/create', {
-        courseName,
+
+      await post('/course/create', {
+        courseName: normalizedCourseName,
         language,
-        description,
-        price,
-        averageQuizScore,
-        topics,
-        teacherId: user.id
+        description: normalizedDescription,
+        price: normalizedPrice,
+        avgQuiz: normalizedAvgQuiz,
+        topics: normalizedTopics,
+        teacherId: Number(user.id),
       });
-      console.log(response.data);
-      alert('Tạo khóa học thành công!');
-      window.history.back()
-    }catch (e: unknown) {
-      if (axios.isAxiosError(e) && e.response) {
-        console.log(e.response.data);
-        alert("Có lỗi xảy ra, vui lòng thử lại sau");
+
+      alert('Tạo khóa học thành công.');
+      router.back();
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error) && error.response) {
+        const message =
+          typeof error.response.data?.message === 'string'
+            ? error.response.data.message
+            : 'Có lỗi xảy ra, vui lòng thử lại sau.';
+
+        alert(message);
+        return;
       }
+
+      alert('Có lỗi xảy ra, vui lòng thử lại sau.');
     }
-  }
-  const handleRemoveTopic = (topicToRemove: string) => {
-    setTopics(topics.filter((topic) => topic !== topicToRemove));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const courseData = {
-      courseName,
-      language,
-      description,
-      price,
-      averageQuizScore,
-      topics,
-    };
-    console.log('Course Data:', courseData);
-  };
-
-  useEffect(() => {
-    console.log(user.id);
-  }, []);
-  const router = useRouter()
   return (
-    <div className="mt-10 rounded-xl create-course-container border-solid border-2 shadow-xl px-6 py-12 lg:px-8 m-100" style={{ padding: '20px', maxWidth: '600px', margin: '0 auto' }}>
-      <h1 className=" mb-10 text-center text-2xl/9 font-bold tracking-tight text-white bg-hcmutDarkBlue rounded-xl">
-        Create Course
-      </h1> 
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label htmlFor="courseName">Course Name:</label>
-          <input
-            type="text"
-            id="courseName"
-            value={courseName}
-            onChange={(e) => setCourseName(e.target.value)}
-            required
-            style={{ width: '100%', padding: '8px', marginTop: '5px' }}
-            className='border-solid border-2 rounded-lg'
-          />
-        </div>
+    <main className="section-shell py-10 sm:py-14">
+      <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+        <section className="rounded-[34px] border border-slate-200 bg-white p-8 shadow-sm">
+          <span className="inline-flex rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-sky-700">
+            Trình tạo khóa học
+          </span>
+          <h1 className="mt-4 text-4xl font-semibold tracking-tight text-slate-900">
+            Tạo khóa học mới
+          </h1>
+          <p className="mt-3 text-sm leading-7 text-slate-600 sm:text-base">
+            Thiết lập thông tin cốt lõi của khóa học, mô tả nội dung, học phí và nhóm chủ đề để chuẩn
+            bị cho toàn bộ flow giảng dạy phía sau.
+          </p>
 
-        <div style={{ marginBottom: '10px' }}>
-          <label htmlFor="language">Language:</label>
-          <select
-            id="language"
-            value={language}
-            onChange={(e) => setLanguage(e.target.value)}
-            style={{ width: '100%', padding: '8px', marginTop: '5px' }}
-            className='border-solid border-2 rounded-lg'
-          >
-            <option value="Vietnamese">Vietnamese</option>
-            <option value="English">English</option>
-          </select>
-        </div>
+          <div className="mt-8 grid gap-4">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Gợi ý</p>
+              <p className="mt-2 text-sm leading-7 text-slate-600">
+                Đặt tên khóa học ngắn gọn, mô tả rõ mục tiêu học tập và thêm ít nhất 2-3 chủ đề để khóa
+                học dễ được nhận diện hơn.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                Thông tin bổ sung
+              </p>
+              <div className="mt-3 space-y-2 text-sm text-slate-600">
+                <p>
+                  Tên chứng chỉ: <span className="font-medium text-slate-800">{certiName || 'Chưa nhập'}</span>
+                </p>
+                <p>
+                  Thời hạn chứng chỉ:{' '}
+                  <span className="font-medium text-slate-800">{expirationTime || 0} tháng</span>
+                </p>
+                <p>
+                  Số chủ đề hiện tại: <span className="font-medium text-slate-800">{topics.length}</span>
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
 
-        <div style={{ marginBottom: '10px' }}>
-          <label htmlFor="description">Description:</label>
-          <textarea
-            id="description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            required
-            style={{ width: '100%', padding: '8px', marginTop: '5px', minHeight: '100px' }}
-            className='border-solid border-2 rounded-lg'
-          ></textarea>
-        </div>
+        <section className="rounded-[34px] border border-slate-200 bg-white p-8 shadow-sm">
+          <div className="grid gap-5 md:grid-cols-2">
+            <div className="md:col-span-2">
+              <label className="mb-2 block text-sm font-medium text-slate-700">Tên khóa học</label>
+              <input
+                type="text"
+                value={courseName}
+                onChange={(e) => setCourseName(e.target.value)}
+                className="block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-sky-300 focus:bg-white focus:ring-4 focus:ring-sky-100"
+              />
+            </div>
 
-        <div style={{ marginBottom: '10px' }}>
-          <label htmlFor="price">Price (VND):</label>
-          <input
-            type="number"
-            id="price"
-            value={price}
-            onChange={(e) => setPrice(Number(e.target.value))}
-            required
-            style={{ width: '100%', padding: '8px', marginTop: '5px' }}
-            className='border-solid border-2 rounded-lg'
-          />
-        </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">Ngôn ngữ</label>
+              <select
+                value={language}
+                onChange={(e) => setLanguage(e.target.value)}
+                className="block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-sky-300 focus:bg-white focus:ring-4 focus:ring-sky-100"
+              >
+                <option value="Vietnamese">Vietnamese</option>
+                <option value="English">English</option>
+              </select>
+            </div>
 
-        <div style={{ marginBottom: '10px' }}>
-          <label htmlFor="averageQuizScore">Average Quiz Score to Complete:</label>
-          <input
-            type="number"
-            id="averageQuizScore"
-            value={averageQuizScore}
-            onChange={(e) => setAverageQuizScore(e.target.value)}
-            required
-            style={{ width: '100%', padding: '8px', marginTop: '5px' }}
-            className='border-solid border-2 rounded-lg'
-          />
-        </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">Học phí (VND)</label>
+              <input
+                type="number"
+                value={price}
+                onChange={(e) => setPrice(Number(e.target.value))}
+                className="block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-sky-300 focus:bg-white focus:ring-4 focus:ring-sky-100"
+              />
+            </div>
 
-        <div style={{ marginBottom: '10px' }}>
-          <label htmlFor="topics">Topics:</label>
-          <div style={{ display: 'flex', alignItems: 'center', marginTop: '5px' }}>
-            <input
-              type="text"
-              id="topics"
-              value={currentTopic}
-              onChange={(e) => setCurrentTopic(e.target.value)}
-              style={{ flex: 1, padding: '8px' }}
-              className='border-solid border-2 rounded-lg'
-            />
-            <button
-              type="button"
-              onClick={handleAddTopic}
-              className=' rounded-xl text-white px-8 py-12 ml-10 cursor-pointer bg-hcmutDarkBlue hover:bg-hcmutLightBlue'
-              style={{ padding: '8px 12px', marginLeft: '10px', cursor: 'pointer' }}
-            >
-              Add
+            <div className="md:col-span-2">
+              <label className="mb-2 block text-sm font-medium text-slate-700">Mô tả khóa học</label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="block min-h-[140px] w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-sky-300 focus:bg-white focus:ring-4 focus:ring-sky-100"
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">Điểm quiz trung bình</label>
+              <input
+                type="number"
+                value={averageQuizScore}
+                onChange={(e) => setAverageQuizScore(e.target.value)}
+                className="block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-sky-300 focus:bg-white focus:ring-4 focus:ring-sky-100"
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">Tên chứng chỉ</label>
+              <input
+                type="text"
+                value={certiName}
+                onChange={(e) => setCertiName(e.target.value)}
+                className="block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-sky-300 focus:bg-white focus:ring-4 focus:ring-sky-100"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Thời hạn chứng chỉ sau khi hoàn thành (tháng)
+              </label>
+              <input
+                type="number"
+                value={expirationTime}
+                onChange={(e) => setExpirationTime(Number(e.target.value))}
+                className="block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-sky-300 focus:bg-white focus:ring-4 focus:ring-sky-100"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="mb-2 block text-sm font-medium text-slate-700">Chủ đề</label>
+              <div className="flex gap-3">
+                <input
+                  type="text"
+                  value={currentTopic}
+                  onChange={(e) => setCurrentTopic(e.target.value)}
+                  className="block flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-sky-300 focus:bg-white focus:ring-4 focus:ring-sky-100"
+                  placeholder="Nhập chủ đề và thêm vào danh sách"
+                />
+                <button type="button" onClick={handleAddTopic} className="button-secondary">
+                  Thêm
+                </button>
+              </div>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                {topics.map((topic, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => handleRemoveTopic(topic)}
+                    className="rounded-full border border-slate-200 bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-200"
+                  >
+                    {topic} ×
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <button type="button" className="button-primary flex-1" onClick={handleAddCourse}>
+              Tạo khóa học
+            </button>
+            <button type="button" className="button-secondary flex-1" onClick={() => router.back()}>
+              Quay lại
             </button>
           </div>
-          <div style={{ marginTop: '10px' }}>
-            {topics.map((topic, index) => (
-              <span
-                key={index}
-                style={{
-                  display: 'inline-block',
-                  background: '#ddd',
-                  padding: '5px 10px',
-                  margin: '5px',
-                  borderRadius: '5px',
-                  cursor: 'pointer',
-                }}
-                onClick={() => handleRemoveTopic(topic)}
-              >
-                {topic} &times;
-              </span>
-            ))}
-          </div>
-
-        </div>
-        <h1 className=" mb-2 text-center text-2xl/9 font-bold tracking-tight text-white bg-orange-600 rounded-lg">
-          Course Certificate
-        </h1> 
-        <div style={{ marginBottom: '10px' }}>
-          <label htmlFor="courseName">Certificate Name:</label>
-          <input
-            type="text"
-            id="courseName"
-            value={certiName}
-            onChange={(e) => setCertiName(e.target.value)}
-            required
-            style={{ width: '100%', padding: '8px', marginTop: '5px' }}
-            className='border-solid border-2 rounded-lg'
-          />
-        </div>
-        <div style={{ marginBottom: '10px' }}>
-          <label htmlFor="price">Expiration time after completion:</label>
-          <input
-            type="number"
-            id="price"
-            value={expirationTime}
-            onChange={(e) => setExpirationTime(Number(e.target.value))}
-            required
-            style={{ width: '100%', padding: '8px', marginTop: '5px' }}
-            className='border-solid border-2 rounded-lg'
-          />
-        </div>
-        
-
-        {/* BUTTON */}
-        <div className='flex justify-between'>
-          <button type="submit" 
-            className='bg-hcmutDarkBlue px-2 py-2 text-white cursor-pointer hover:bg-hcmutLightBlue rounded-xl'
-              onClick={handleAddCourse}
-          >
-            Create Course
-          </button>
-          <button type="button" 
-            className='bg-red-600 px-2 py-2 text-white cursor-pointer hover:bg-red-700 rounded-xl'
-            onClick={() => router.back()}
-          >
-            Quay lại
-          </button>
-        </div>
-        
-        
-      </form>
-    </div>
+        </section>
+      </div>
+    </main>
   );
 };
 

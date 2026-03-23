@@ -2,12 +2,14 @@
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
+  type ChartOptions,
   LineElement,
   CategoryScale,
   LinearScale,
   PointElement,
   Tooltip,
   Legend,
+  type TooltipItem,
 } from "chart.js";
 import { useEffect, useState } from "react";
 import { useRecoilState } from "recoil";
@@ -97,11 +99,17 @@ const RegistrationChart = () => {
 
     const fetchCourses = async () => {
         if (userLogin.token === '') return;
-        const data = await request.get(`/join/teacherId/${userLogin.id}`);
-        if (data.status === 200) {
-            setCourses(data.data);
-        } else {
-            console.log(data.message);
+        try {
+            const data = await request.get(`/join/teacherId/${userLogin.id}`);
+            if (data.status === 200) {
+                setCourses(data.data);
+            } else {
+                console.log(data.message);
+                setCourses([]);
+            }
+        } catch (error) {
+            console.log("Khong the tai du lieu dang ky", error);
+            setCourses([]);
         }
     };
 
@@ -112,7 +120,14 @@ const RegistrationChart = () => {
 
     if (!userLogin) return <>Not Logged in</>;
 
-    // Find min and max dates
+    if (courses.length === 0) {
+        return (
+            <div className="bg-white rounded-lg p-6 h-max text-center text-slate-500">
+                Chua co du lieu dang ky de hien thi.
+            </div>
+        );
+    }
+
     const minDate = new Date(Math.min(...courses.map(course => new Date(course.dateStart).getTime())));
     const maxDate = new Date(Math.max(...courses.map(course => new Date(course.dateStart).getTime())));
 
@@ -176,7 +191,7 @@ const RegistrationChart = () => {
     };
 
     // Chart.js Options
-    const options = {
+    const options: ChartOptions<"line"> = {
         responsive: true,
         plugins: {
             legend: {
@@ -184,8 +199,9 @@ const RegistrationChart = () => {
             },
             tooltip: {
                 callbacks: {
-                    label: function (context: { raw: number }) {
-                        return `Students: ${context.raw}`;
+                    label: function (context: TooltipItem<"line">) {
+                        const value = typeof context.raw === "number" ? context.raw : Number(context.raw ?? 0);
+                        return `Students: ${value}`;
                     },
                 },
             },

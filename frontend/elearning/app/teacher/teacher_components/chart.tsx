@@ -2,12 +2,14 @@
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
+  type ChartOptions,
   LineElement,
   CategoryScale,
   LinearScale,
   PointElement,
   Tooltip,
   Legend,
+  type TooltipItem,
 } from "chart.js";
 import { Label } from "@radix-ui/react-label";
 import { useEffect, useState } from "react";
@@ -94,20 +96,33 @@ const RevenueChart = () => {
     }, [])
     const fetchCourses = async () => {
         if (userLogin.token === '') return;
-        const data = await request.get(`/join/teacherId/${userLogin.id}`);
-        if (data.status === 200) {
-            //   console.log(data.data);
-            setCourses(data.data);
-        } else {
-            console.log(data.message);
+        try {
+            const data = await request.get(`/join/teacherId/${userLogin.id}`);
+            if (data.status === 200) {
+                setCourses(data.data);
+            } else {
+                console.log(data.message);
+                setCourses([]);
+            }
+        } catch (error) {
+            console.log("Khong the tai du lieu doanh thu", error);
+            setCourses([]);
         }
-        };
+    };
     useEffect(() => {
         if (!userLogin) return;
         fetchCourses();
     }, [userLogin]);
     if (!userLogin) return <>Not Logged in</>;
         console.log("COURSE:", courses);
+
+    if (courses.length === 0) {
+        return (
+            <div className="bg-white rounded-lg p-6 h-max text-center text-slate-500">
+                Chua co du lieu doanh thu de hien thi.
+            </div>
+        );
+    }
 
     const minDate = new Date(Math.min(...courses.map(course => new Date(course.dateStart).getTime())));
     const maxDate = new Date(Math.max(...courses.map(course => new Date(course.dateStart).getTime())));
@@ -149,7 +164,7 @@ const RevenueChart = () => {
         datasets,
     };
     // Chart.js Options
-    const options = {
+    const options: ChartOptions<"line"> = {
         responsive: true,
         plugins: {
             legend: {
@@ -157,8 +172,9 @@ const RevenueChart = () => {
             },
             tooltip: {
                 callbacks: {
-                    label: function (context: { raw: number }) {
-                        return `Revenue: ${context.raw.toLocaleString()} VND`;
+                    label: function (context: TooltipItem<"line">) {
+                        const value = typeof context.raw === "number" ? context.raw : Number(context.raw ?? 0);
+                        return `Revenue: ${value.toLocaleString()} VND`;
                     },
                 },
             },

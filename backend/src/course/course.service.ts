@@ -3,6 +3,11 @@ import { db } from "../db/db"
 import { and, eq } from "drizzle-orm"
 import courseTopicService from "../courseTopic/courseTopic.service"
 class CourseService{
+    private FormatDate = (date: string) => {
+        const dateObj = new Date(date)
+        return `${dateObj.getFullYear()}-${dateObj.getMonth()}-${dateObj.getDate()}`
+    }
+
     public getAllCoursesWithTeacherInfo = async () => {
         try {
             const coursesWithTeachers = await db
@@ -151,6 +156,31 @@ class CourseService{
         avgQuiz: number
     ) => {
         try {
+            if (!courseName || !description) {
+                return {
+                    message: "Course name and description are required",
+                    status: 400
+                }
+            }
+
+            if (!teacherId || Number.isNaN(Number(teacherId))) {
+                return {
+                    message: "Invalid teacher account",
+                    status: 400
+                }
+            }
+
+            const teacherExist = await db.select({ userId: teacher.userId })
+                                         .from(teacher)
+                                         .where(eq(teacher.userId, teacherId))
+
+            if (teacherExist.length === 0){
+                return {
+                    message: "Teacher account is not available in the teacher table",
+                    status: 400
+                }
+            }
+
             // check if course already exist
             const courseExist = await db.select({})
                                         .from(course)
@@ -173,9 +203,10 @@ class CourseService{
                 price: price,
             })
 
+            // Query lại để lấy courseId
             const createdCourse = await this.getCourseByName(courseName)
-
-            if(!createdCourse){
+            
+            if (!createdCourse) {
                 return {
                     message: "Failed to create course",
                     status: 500
@@ -193,7 +224,7 @@ class CourseService{
             }
         } catch (error) {
             return {
-                message: error,
+                message: error instanceof Error ? error.message : String(error),
                 status: 500
             }
             
@@ -255,6 +286,7 @@ class CourseService{
         })
         .where(eq(course.id, id))
 
+        // Query lại để lấy dữ liệu đã update
         const updatedCourse = await this.getCourseById(id)
 
         if (!updatedCourse){
@@ -297,6 +329,7 @@ class CourseService{
         })
         .where(eq(course.name, name))
 
+        // Query lại để lấy dữ liệu đã update (dùng tên mới nếu có, không thì dùng tên cũ)
         const updatedCourse = await this.getCourseByName(newName || name)
 
         if (!updatedCourse){

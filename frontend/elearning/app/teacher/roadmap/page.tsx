@@ -5,6 +5,7 @@ import Sidebar from "../teacher_components/sidebar";
 import { useRecoilState } from "recoil";
 import { userLoginState } from "@/state";
 import * as request from '@/app/axios/axios';
+
 interface Course {
   courseId: number;
   courseName: string;
@@ -15,32 +16,40 @@ interface Course {
   topics: string[];
   creationTime: string;
 }
+
 const RoadMapPage = () => {
   const [userLogin, setUserLogin] = useRecoilState(userLoginState)
   const [courses, setCourses] = useState<Course[]>([]);
   const [selectedCourses, setSelectedCourses] = useState<Course[]>([]);
-  
+  const [roadmapName, setRoadmapName] = useState('');
+  const [roadmapDescription, setRoadmapDescription] = useState('');
+  const [learningTip, setLearningTip] = useState('');
+
   const handleCheckboxChange = (course: Course, isChecked: boolean) => {
-        setSelectedCourses((prev) => {
-            if (isChecked) {
-                // Add the course if checked
-                return [...prev, course];
-            } else {
-                // Remove the course if unchecked
-                return prev.filter((c) => c.courseId !== course.courseId);
-            }
-        });
-    };
+    setSelectedCourses((prev) => {
+      if (isChecked) {
+        return [...prev, course];
+      }
+
+      return prev.filter((c) => c.courseId !== course.courseId);
+    });
+  };
+
   const fetchCourses = async () => {
     if (userLogin.token === '') return;
-    const data = await request.get(`/course/teacherId/${userLogin.id}`);
-    if (data.status === 200) {
-      console.log(data.data);
-      setCourses(data.data);
-    } else {
-      console.log(data.message);
+    try {
+      const data = await request.get(`/course/teacherId/${userLogin.id}`);
+      if (data.status === 200) {
+        setCourses(data.data);
+      } else {
+        setCourses([]);
+      }
+    } catch (error) {
+      console.log("Khong the tai danh sach khoa hoc", error);
+      setCourses([]);
     }
   }
+
   useEffect(() => {
     const userFromSessionRaw = sessionStorage.getItem('userLogin')
     if(!userFromSessionRaw) return
@@ -52,123 +61,128 @@ const RoadMapPage = () => {
     fetchCourses();
   }, [userLogin]);
 
-  useEffect(() => {
-      const userFromSessionRaw = sessionStorage.getItem('userLogin')
-      if(!userFromSessionRaw) return
-      setUserLogin(JSON.parse(userFromSessionRaw))  
-  }, [])
-
-  const [roadmapName, setRoadmapName] = useState('');
-  const [roadmapDescription, setRoadmapDescription] = useState('');
-  const [learningTip, setLearningTip] = useState('');
-  const [roadmapCertificateName, setRoadmapCertificateName] = useState('');
-  const [roadmapCertificateExpiration, setRoadmapCertificateExpiration] = useState(0);
   const handleSubmit = async () =>{
-    console.log(roadmapName, roadmapDescription, learningTip, roadmapCertificateName, roadmapCertificateExpiration, selectedCourses);
-    let formData = {
+    const formData = {
       name: roadmapName,
       description: roadmapDescription,
       instruction: learningTip,
       teacherId: userLogin.id,
-      includeCourse: selectedCourses.map(course => {
-        return {
-          courseId: course.courseId
-        }
-      })
+      includeCourse: selectedCourses.map(course => ({
+        courseId: course.courseId
+      }))
     }
 
-    // first create roadmap like this
-    const roadmap = await request.post('/roadmap/create', formData);
-    console.log(roadmap);
-    if (roadmap.status === 200) {
-      alert('Roadmap created successfully');
-    } else {
-      console.log(roadmap.message);
+    try {
+      const roadmap = await request.post('/roadMap/create', formData);
+      if (roadmap.status === 200) {
+        alert('Tạo lộ trình thành công.');
+      } else {
+        console.log(roadmap.message);
+      }
+    } catch (error) {
+      console.log("Khong the tao lo trinh", error);
+      alert("Không thể tạo lộ trình lúc này.");
     }
   }
-  return (
-    <div className="bg-grayBG">
-      <div className="grid grid-cols-12 grid-rows-12 min-h-screen gap-4">
-        {Header(userLogin.lastName + ' ' + userLogin.firstName)}
-        {Sidebar(userLogin.firstName, userLogin.lastName)}
-        <div className="bg-white col-span-10 row-span-10 mb-4 rounded-xl shadow-xl">
-            <h1 className="bg-yellow-600 h-20 rounded-t-xl text-center text-3xl text-white font-semibold uppercase p-2 flex items-center justify-center">CREATE ROADMAP</h1>
-            <div className="flex flex-col items-center p-4">
-                <label htmlFor="" className="text-xl font-semibold">Roadmap Name</label>
-                <input type="text" name="" id="" className="border-2 rounded-lg border-black p-1" onChange={
-                    (e) => setRoadmapName(e.target.value)
-                }/>
-                <label htmlFor="" className="text-xl font-semibold">Roadmap description</label>
-                <textarea id="description" name="description" className="border-2 rounded-lg border-black p-1" rows={4} cols={50} onChange={
-                    (e) => setRoadmapDescription(e.target.value) 
-                }>
-                </textarea>
-                <label htmlFor="" className="text-xl font-semibold">Learing tip</label>
-                <textarea id="description" name="description" className="border-2 rounded-lg border-black p-1" rows={4} cols={50}
-                onChange={
-                    (e) => setLearningTip(e.target.value) 
-                }>
-                </textarea>
-                {/* COURSE CONTAINER */}
-                <div className="flex justify-evenly w-full mt-10">
-                  <div>
-                    <label htmlFor="" className="text-xl font-semibold mb-4 block">
-                      Choose Your Current Courses
-                    </label>
-                    <div className="space-y-2">
-                        {courses.map((course) => (
-                            <div
-                                key={course.courseId}
-                                className="gap-2 p-2 border rounded-md hover:bg-gray-50"
-                            >
-                                <input
-                                    type="checkbox"
-                                    name="course"
-                                    id={`course-${course.courseId}`}
-                                    className="h-5 w-5 text-blue-500 focus:ring focus:ring-blue-300 rounded-sm"
-                                    onChange={(e) => handleCheckboxChange(course, e.target.checked)}
-                                />
-                                <label
-                                    htmlFor={`course-${course.courseId}`}
-                                    className="text-gray-700 text-xl font-medium cursor-pointer"
-                                >
-                                    {course.courseName}
-                                </label>
-                            </div>
-                        ))}
-                    </div>
-                  </div>
-                  
-                  {/* Selected courses */}
-                  <div className="">
-                      <label htmlFor="" className="text-xl font-semibold mb-4 block">
-                      Selected Courses
-                    </label>
-                      <ul className="list-disc pl-5 space-y-1 text-gray-700 border-2 border-black p-2 text-xl rounded-xl">
-                          {selectedCourses.map((course, index) => (
-                              <li key={course.courseId}>
-                                  <span className="font-semibold">{index + 1}.</span> {course.courseName}
-                              </li>
-                          ))}
-                      </ul>
-                  </div>
-                </div>
-                <label htmlFor="" className="text-xl font-semibold mt-4">Roadmap Certificate Name</label>
-                <input type="text" name="" id="" className="border-2 rounded-lg border-black p-1" onChange={
-                    (e) => setRoadmapCertificateName(e.target.value)
-                }/>
-                <label htmlFor="" className="text-xl font-semibold mt-4">Roadmap Certificate Expiration Time (Month)</label>
-                <input type="number" name="" id="" className="border-2 rounded-lg border-black p-1" onChange={
-                    (e) => setRoadmapCertificateExpiration(Number(e.target.value)) 
-                }/>
-                <button className="bg-yellow-600 text-white px-4 py-2 rounded-lg mt-4" onClick={handleSubmit}>
-                    Create Roadmap
-                </button>
 
-            </div>
+  return (
+    <main className="section-shell py-8">
+      <div className="grid min-h-screen grid-cols-12 gap-6">
+        <div className="col-span-12">
+          {Header(userLogin.lastName + ' ' + userLogin.firstName)}
         </div>
+
+        {Sidebar(userLogin.firstName, userLogin.lastName)}
+
+        <section className="col-span-10 rounded-[30px] border border-slate-200 bg-white p-8 shadow-sm">
+          <div className="max-w-3xl">
+            <span className="inline-flex rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-sky-700">
+              Teacher Planner
+            </span>
+            <h1 className="mt-4 text-4xl font-semibold tracking-tight text-slate-900">
+              Tạo lộ trình giảng dạy
+            </h1>
+            <p className="mt-3 text-sm leading-7 text-slate-600 sm:text-base">
+              Xây dựng một lộ trình có cấu trúc từ các khóa học hiện có để học viên theo dõi tiến độ và định hướng học tập rõ ràng hơn.
+            </p>
+          </div>
+
+          <div className="mt-8 grid gap-8 xl:grid-cols-[0.95fr_1.05fr]">
+            <div className="space-y-5">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">Tên lộ trình</label>
+                <input
+                  type="text"
+                  className="block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-sky-300 focus:bg-white focus:ring-4 focus:ring-sky-100"
+                  onChange={(e) => setRoadmapName(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">Mô tả lộ trình</label>
+                <textarea
+                  className="block min-h-[140px] w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-sky-300 focus:bg-white focus:ring-4 focus:ring-sky-100"
+                  onChange={(e) => setRoadmapDescription(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">Hướng dẫn học tập</label>
+                <textarea
+                  className="block min-h-[160px] w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-sky-300 focus:bg-white focus:ring-4 focus:ring-sky-100"
+                  onChange={(e) => setLearningTip(e.target.value)}
+                />
+              </div>
+
+              <button className="button-primary w-full" onClick={handleSubmit}>
+                Tạo lộ trình
+              </button>
+            </div>
+
+            <div className="grid gap-6 lg:grid-cols-2">
+              <div className="rounded-[26px] border border-slate-200 bg-slate-50 p-5">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Khóa học hiện có</p>
+                <div className="mt-4 space-y-3">
+                  {courses.map((course) => (
+                    <label
+                      key={course.courseId}
+                      className="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-sky-200"
+                    >
+                      <input
+                        type="checkbox"
+                        className="mt-1 h-4 w-4 rounded border-slate-300 text-sky-700"
+                        onChange={(e) => handleCheckboxChange(course, e.target.checked)}
+                      />
+                      <div>
+                        <p className="font-semibold text-slate-900">{course.courseName}</p>
+                        <p className="mt-1 text-sm text-slate-500">{course.language}</p>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="rounded-[26px] border border-slate-200 bg-slate-50 p-5">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Đã chọn</p>
+                <div className="mt-4 space-y-3">
+                  {selectedCourses.length > 0 ? selectedCourses.map((course, index) => (
+                    <div key={course.courseId} className="rounded-2xl border border-slate-200 bg-white p-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Bước {index + 1}</p>
+                      <p className="mt-2 font-semibold text-slate-900">{course.courseName}</p>
+                    </div>
+                  )) : (
+                    <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-500">
+                      Chọn khóa học ở cột bên trái để bắt đầu tạo lộ trình.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
-    </div>
+    </main>
   );
 }
+
 export default RoadMapPage;

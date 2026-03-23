@@ -21,7 +21,7 @@ const auth_service_1 = __importDefault(require("../auth/auth.service"));
 class TeacherService {
     constructor() {
         this.generateUniqueTeacherId = (id) => __awaiter(this, void 0, void 0, function* () {
-            let uniqueId = 'GV';
+            let uniqueId = 'TC';
             const lenId = id.toString().length;
             for (let i = 0; i < 8 - lenId; i++) {
                 uniqueId += '0';
@@ -83,16 +83,18 @@ class TeacherService {
                 return null;
             }
             const teacherId = yield this.generateUniqueTeacherId(newUser[0].id);
-            const newTeacher = yield db_1.db
-                .insert(schema_2.teacher)
+            yield db_1.db.insert(schema_2.teacher)
                 .values({
                 userId: newUser[0].id,
                 teacherId: teacherId,
-            })
-                .returning({
+            });
+            // Query lại để lấy dữ liệu đã insert
+            const newTeacher = yield db_1.db.select({
                 userId: schema_2.teacher.userId,
                 teacherId: schema_2.teacher.teacherId
-            });
+            })
+                .from(schema_2.teacher)
+                .where((0, drizzle_orm_1.eq)(schema_2.teacher.userId, newUser[0].id));
             if (!newTeacher || newTeacher.length === 0) {
                 console.log('error teacher');
                 return null;
@@ -108,15 +110,17 @@ class TeacherService {
             if (!updateUser || updateUser.length === 0) {
                 return null;
             }
-            const updateTeacher = yield db_1.db
-                .update(schema_2.teacher)
+            yield db_1.db.update(schema_2.teacher)
                 .set({
                 userId: updateUser[0].id
             })
-                .where((0, drizzle_orm_1.eq)(schema_2.teacher.userId, id))
-                .returning({
+                .where((0, drizzle_orm_1.eq)(schema_2.teacher.userId, id));
+            // Query lại để lấy dữ liệu đã update
+            const updateTeacher = yield db_1.db.select({
                 teacherId: schema_2.teacher.teacherId,
-            });
+            })
+                .from(schema_2.teacher)
+                .where((0, drizzle_orm_1.eq)(schema_2.teacher.userId, id));
             if (!updateTeacher || updateTeacher.length === 0) {
                 return null;
             }
@@ -133,16 +137,18 @@ class TeacherService {
             };
         });
         this.deleteTeacher = (id) => __awaiter(this, void 0, void 0, function* () {
-            const teacherToDelete = yield db_1.db
-                .delete(schema_2.teacher)
-                .where((0, drizzle_orm_1.eq)(schema_2.teacher.userId, id))
-                .returning({
+            // Lấy thông tin teacher trước khi xóa
+            const teacherInfo = yield db_1.db.select({
                 teacherId: schema_2.teacher.teacherId,
-            });
-            if (!teacherToDelete || teacherToDelete.length === 0) {
+            })
+                .from(schema_2.teacher)
+                .where((0, drizzle_orm_1.eq)(schema_2.teacher.userId, id));
+            if (!teacherInfo || teacherInfo.length === 0) {
                 return null;
             }
-            const userToDelete = yield user_service_1.default.deleteUser(id, teacherToDelete);
+            yield db_1.db.delete(schema_2.teacher)
+                .where((0, drizzle_orm_1.eq)(schema_2.teacher.userId, id));
+            const userToDelete = yield user_service_1.default.deleteUser(id, teacherInfo);
             if (!userToDelete) {
                 return null;
             }

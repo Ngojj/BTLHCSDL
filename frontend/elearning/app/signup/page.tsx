@@ -3,13 +3,12 @@ import Image from "next/image";
 import React, { useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import jwt from "jsonwebtoken"
+import jwt from "jsonwebtoken";
 import { UserLoginDto } from "../dtos/user.dto";
 import { useSetRecoilState } from "recoil";
 import { userLoginState } from "@/state";
 
-
-export default function Login() {
+export default function Signup() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
@@ -17,349 +16,234 @@ export default function Login() {
   const [lastName, setLastName] = useState("");
   const [bankName, setBankName] = useState("");
   const [bankAccountNumber, setBankAccountNumber] = useState("");
-  const [role, setRole] = useState("Teacher"); 
+  const [role, setRole] = useState("Teacher");
   const [password, setPassword] = useState("");
-  const setUserLogin = useSetRecoilState(userLoginState)
+  const setUserLogin = useSetRecoilState(userLoginState);
+  const router = useRouter();
 
   const togglePasswordVisibility = () => {
     setShowPassword((prev) => !prev);
   };
-  const router = useRouter();
-  const navigateToLogin = () => {
-    router.push('login');
+
+  const getRegisterErrorMessage = (error: any) => {
+    return error?.response?.data?.message || "Đăng ký thất bại. Vui lòng thử lại sau.";
   };
 
+  const saveAuthAndRedirect = (response: any, redirectPath: string) => {
+    const decoded = jwt.decode(response.data.token.token) as jwt.JwtPayload | null;
 
-  function sendSignUpRequestAsStudent() {
-    axios
-      .post("http://localhost:4000/auth/register-as-student", {
-        firstName: firstName,
-        lastName: lastName,
-        username: username,
-        password: password,
-        email: email,
-        bankName: bankName,
+    if (!decoded) {
+      throw new Error("Invalid token");
+    }
+
+    const data: UserLoginDto = {
+      id: decoded.id as string,
+      role: decoded.role as string,
+      firstName: decoded.firstName as string,
+      lastName: decoded.lastName as string,
+      token: response.data.token,
+      email: decoded.email as string,
+      bankName: decoded.bankName as string,
+      bankAccount: decoded.bankAccount as string,
+    };
+
+    setUserLogin(data);
+    sessionStorage.setItem("userLogin", JSON.stringify(data));
+    router.push(redirectPath);
+  };
+
+  const handleSignup = async () => {
+    try {
+      const path =
+        role === "Student"
+          ? "http://localhost:4000/auth/register-as-student"
+          : "http://localhost:4000/auth/register-as-teacher";
+
+      const response = await axios.post(path, {
+        firstName,
+        lastName,
+        username,
+        password,
+        email,
+        bankName,
         bankAccount: bankAccountNumber,
-      })
-      .then((response) => {
-        if (response.status === 200) {
-           console.log(response.data)
-          const decoded = jwt.decode(response.data.token.token) as jwt.JwtPayload | null;
-
-          if (!decoded) {
-            throw new Error("Invalid token");
-          }
-  
-        const data: UserLoginDto = {
-          id: decoded.id as string, 
-          role: decoded.role as string,
-          firstName: decoded.firstName as string,
-          lastName: decoded.lastName as string,
-          token: response.data.token,
-          email: decoded.email as string,
-          bankName: decoded.bankName as string,
-          bankAccount: decoded.bankAccount as string
-        };
-
-        setUserLogin(data);
-
-        sessionStorage.setItem('userLogin', JSON.stringify(data));
-          alert("Đăng Ký thành công!");
-          router.push('/');
-        }
-      })
-      .catch((error) => {
-        console.log(error);
-        alert("Đăng ký thất bại! Vui lòng thử lại sau!");
       });
-  }
-  function sendSignUpRequestAsTeacher() {
-    axios
-    .post("http://localhost:4000/auth/register-as-teacher", {
-      firstName: firstName,
-      lastName: lastName,
-      username: username,
-      password: password,
-      email: email,
-      bankName: bankName,
-      bankAccount: bankAccountNumber,
-    })
-    .then((response) => {
+
       if (response.status === 200) {
-
-        const decoded = jwt.decode(response.data.token.token) as jwt.JwtPayload | null;
-
-        if (!decoded) {
-          throw new Error("Invalid token"); 
-        }
-  
-        const data: UserLoginDto = {
-          id: decoded.id as string, 
-          role: decoded.role as string,
-          firstName: decoded.firstName as string,
-          lastName: decoded.lastName as string,
-          token: response.data.token,
-          email: decoded.email as string,
-          bankName: decoded.bankName as string,
-          bankAccount: decoded.bankAccount as string
-        };
-
-        setUserLogin(data);
-
-        sessionStorage.setItem('userLogin', JSON.stringify(data));
-
-        alert("Đăng ký thành công!");
-        router.push('/teacher');
-      } 
-    })
-    .catch((error) => {
+        alert("Đăng ký thành công.");
+        saveAuthAndRedirect(response, role === "Student" ? "/" : "/teacher");
+      }
+    } catch (error) {
       console.log(error);
-      alert("Đăng ký thất bại! Vui lòng thử lại sau!");
-    });
-  }
-  return (
-    <div className="bg-background">
-      <div className="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8 bg-white ">
-        <div className="sm:mx-auto sm:w-full sm:max-w-sm">
-          <Image
-            className="mx-auto h-20 w-auto rounded-xl"
-            src="https://lms.hcmut.edu.vn/pluginfile.php/3/theme_academi/logo/1725955904/logoBK.png"
-            width={100} height={100}
-            alt="Your Company"
-          />
-          <h2 className="rounded-lg mt-10 text-center text-2xl/9 font-bold tracking-tight text-white bg-hcmutDarkBlue">
-            Đăng ký tài khoản
-          </h2>
-        </div>
+      alert(getRegisterErrorMessage(error));
+    }
+  };
 
-        <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-          <form className="p-5 space-y-6 border-solid border-2 shadow-sm rounded-xl" action="#" method="POST">
-            {/* Email Address */}
+  return (
+    <main className="section-shell py-10 sm:py-14">
+      <div className="grid min-h-[82vh] overflow-hidden rounded-[36px] border border-slate-200 bg-white shadow-sm lg:grid-cols-[0.95fr_1.05fr]">
+        <section className="relative hidden overflow-hidden bg-slate-900 px-10 py-12 text-white lg:block">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.18),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(255,255,255,0.08),transparent_22%)]" />
+          <div className="relative flex h-full flex-col justify-between">
             <div>
-              <label
-                htmlFor="email"
-                className="block text-sm/6 font-medium text-gray-900"
-              >
-                Địa chỉ email
-              </label>
-              <div className="mt-2">
+              <span className="inline-flex rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-slate-100">
+                Create Account
+              </span>
+              <h1 className="mt-6 max-w-xl text-4xl font-semibold leading-tight">
+                Tạo tài khoản để bắt đầu học tập hoặc quản lý khóa học trong một hệ thống thống nhất.
+              </h1>
+              <p className="mt-5 max-w-lg text-sm leading-7 text-slate-300">
+                Phù hợp cho cả sinh viên và giảng viên, với dashboard rõ ràng, lộ trình học tập và trải nghiệm quản lý trực quan hơn.
+              </p>
+            </div>
+
+            <div className="grid gap-4">
+              <div className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300">Bạn sẽ có gì</p>
+                <ul className="mt-3 space-y-3 text-sm text-slate-100">
+                  <li>Truy cập hệ thống học tập trực tuyến ngay sau khi đăng ký.</li>
+                  <li>Quản lý tiến độ, quiz, khóa học và lộ trình từ một tài khoản duy nhất.</li>
+                  <li>Trải nghiệm giao diện đồng bộ cho cả người học và người dạy.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="px-6 py-8 sm:px-10">
+          <div className="mx-auto w-full max-w-2xl">
+            <div className="mb-8 text-center">
+              <Image
+                className="mx-auto h-16 w-16 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm"
+                src="https://lms.hcmut.edu.vn/pluginfile.php/3/theme_academi/logo/1725955904/logoBK.png"
+                width={96}
+                height={96}
+                alt="Bách Khoa"
+              />
+              <h2 className="mt-6 text-3xl font-semibold tracking-tight text-slate-900">
+                Đăng ký tài khoản
+              </h2>
+              <p className="mt-3 text-sm leading-6 text-slate-500">
+                Điền thông tin bên dưới để bắt đầu sử dụng hệ thống.
+              </p>
+            </div>
+
+            <div className="grid gap-5 md:grid-cols-2">
+              <div className="md:col-span-2">
+                <label className="mb-2 block text-sm font-medium text-slate-700">Địa chỉ email</label>
                 <input
-                  id="email"
-                  name="email"
                   type="email"
-                  autoComplete="email"
                   required
-                  className="px-2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
+                  className="block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-sky-300 focus:bg-white focus:ring-4 focus:ring-sky-100"
                   onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
-            </div>
 
-            <div>
-              <label
-                htmlFor="user-name"
-                className="block text-sm/6 font-medium text-gray-900"
-              >
-                Tài khoản
-              </label>
-              <div className="mt-2">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">Tài khoản</label>
                 <input
-                  id="user-name"
-                  name="user-name"
                   type="text"
-                  autoComplete="username"
                   required
-                  className="px-2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
+                  className="block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-sky-300 focus:bg-white focus:ring-4 focus:ring-sky-100"
                   onChange={(e) => setUsername(e.target.value)}
                 />
               </div>
-            </div>
 
-            {/* Contact Information */}
-            <div>
-              <label
-                htmlFor="first-name"
-                className="block text-sm/6 font-medium text-gray-900"
-              >
-                Họ
-              </label>
-              <div className="mt-2">
-                <input
-                  id="first-name"
-                  name="first-name"
-                  type="text"
-                  required
-                  className="px-2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
-                  onChange={(e) => setFirstName(e.target.value)}
-                />
-              </div>
-            </div>
-            <div>
-              <label
-                htmlFor="class-name"
-                className="block text-sm/6 font-medium text-gray-900"
-              >
-                Tên
-              </label>
-              <div className="mt-2">
-                <input
-                  id="last-name"
-                  name="last-name"
-                  type="text"
-                  required
-                  className="px-2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
-                  onChange={(e) => setLastName(e.target.value)}
-                />
-              </div>
-            </div>
-
-            {/* Bank Information */}
-            <div>
-              <label
-                htmlFor="bank-name"
-                className="block text-sm/6 font-medium text-gray-900"
-              >
-                Tên ngân hàng
-              </label>
-              <div className="mt-2">
-                <input
-                  id="bank-name"
-                  name="bank-name"
-                  type="text"
-                  required
-                  className="px-2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
-                  onChange={(e) => setBankName(e.target.value)}
-                />
-              </div>
-            </div>
-            <div>
-              <label
-                htmlFor="bank-account"
-                className="block text-sm/6 font-medium text-gray-900"
-              >
-                Số tài khoản
-              </label>
-              <div className="mt-2">
-                <input
-                  id="bank-account"
-                  name="bank-account"
-                  type="number"
-                  required
-                  className="px-2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
-                  onChange={(e) => setBankAccountNumber(e.target.value)}
-                />
-              </div>
-            </div>
-
-            {/* Role Selector */}
-            <div>
-              <label
-                htmlFor="role"
-                className="block text-sm/6 font-medium text-gray-900"
-              >
-                Đăng ký với vai trò
-              </label>
-              <div className="mt-2">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">Vai trò</label>
                 <select
-                  id="role"
-                  name="role"
                   required
                   value={role}
-                  className="px-2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
+                  className="block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-sky-300 focus:bg-white focus:ring-4 focus:ring-sky-100"
                   onChange={(e) => setRole(e.target.value)}
                 >
                   <option value="Teacher">Teacher</option>
                   <option value="Student">Student</option>
                 </select>
               </div>
-            </div>
 
-            {/* Password */}
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-sm/6 font-medium text-gray-900"
-              >
-                Mật khẩu
-              </label>
-              <div className="mt-2 relative">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">Họ</label>
                 <input
-                  id="password"
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="current-password"
+                  type="text"
                   required
-                  className="px-2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
-                  onChange={(e) => setPassword(e.target.value)}
+                  className="block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-sky-300 focus:bg-white focus:ring-4 focus:ring-sky-100"
+                  onChange={(e) => setFirstName(e.target.value)}
                 />
-                <button
-                  type="button"
-                  onClick={togglePasswordVisibility}
-                  className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500 focus:outline-none"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                >
-                  {showPassword ? (
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth="1.5"
-                      stroke="currentColor"
-                      className="w-5 h-5"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M3.98 8.223A10.477 10.477 0 0112 6c2.945 0 5.678.994 7.796 2.646M12 18c-2.945 0-5.678-.994-7.796-2.646M3.98 15.777A10.477 10.477 0 0112 18c2.945 0 5.678-.994-7.796-2.646M3.98 8.223A10.477 10.477 0 0112 6c2.945 0 5.678.994 7.796 2.646M15.454 12A3.454 3.454 0 1112 8.546 3.454 3.454 0 0115.454 12z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M4.93 4.93l14.14 14.14"
-                      />
-                    </svg>
-                  ) : (
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth="1.5"
-                      stroke="currentColor"
-                      className="w-5 h-5"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M15.454 12A3.454 3.454 0 1112 8.546 3.454 3.454 0 0115.454 12z"
-                      />
-                    </svg>
-                  )}
-                </button>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">Tên</label>
+                <input
+                  type="text"
+                  required
+                  className="block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-sky-300 focus:bg-white focus:ring-4 focus:ring-sky-100"
+                  onChange={(e) => setLastName(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">Tên ngân hàng</label>
+                <input
+                  type="text"
+                  required
+                  className="block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-sky-300 focus:bg-white focus:ring-4 focus:ring-sky-100"
+                  onChange={(e) => setBankName(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">Số tài khoản</label>
+                <input
+                  type="number"
+                  required
+                  className="block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-sky-300 focus:bg-white focus:ring-4 focus:ring-sky-100"
+                  onChange={(e) => setBankAccountNumber(e.target.value)}
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="mb-2 block text-sm font-medium text-slate-700">Mật khẩu</label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    required
+                    className="block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 pr-12 text-slate-900 outline-none transition focus:border-sky-300 focus:bg-white focus:ring-4 focus:ring-sky-100"
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    onClick={togglePasswordVisibility}
+                    className="absolute inset-y-0 right-0 flex items-center px-4 text-slate-400"
+                    aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                  >
+                    {showPassword ? "Ẩn" : "Hiện"}
+                  </button>
+                </div>
               </div>
             </div>
 
-            <div>
+            <button
+              type="button"
+              className="button-primary mt-6 w-full"
+              onClick={handleSignup}
+            >
+              Đăng ký
+            </button>
+
+            <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-center text-sm text-slate-600">
+              Đã có tài khoản?{" "}
               <button
                 type="button"
-                className="flex w-full justify-center rounded-md bg-hcmutDarkBlue px-3 py-1.5 text-sm/6 font-semibold text-white shadow-sm hover:bg-hcmutLightBlue focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                onClick={() => role === "Student" ? sendSignUpRequestAsStudent() : sendSignUpRequestAsTeacher()}
+                className="font-semibold text-sky-700 transition hover:text-sky-800"
+                onClick={() => router.push("/login")}
               >
-                Đăng ký
+                Đăng nhập ngay
               </button>
             </div>
-          </form>
-          <p className="mt-10 text-center text-sm/6 text-gray-500">
-            Đã là thành viên?{" "}
-            <a
-              href="#"
-              className="font-semibold text-hcmutDarkBlue hover:text-hcmutLightBlue"
-              onClick={navigateToLogin}
-            >
-              Đăng nhập vào tài khoản của bạn
-            </a>
-          </p>
-        </div>
+          </div>
+        </section>
       </div>
-    </div>
+    </main>
   );
 }

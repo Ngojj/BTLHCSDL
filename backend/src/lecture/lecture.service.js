@@ -96,9 +96,22 @@ class lectureService {
     createLecture(lectureDto) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const returnVal = yield db_1.db.insert(schema_1.lecture).values(lectureDto).returning({ lectureId: schema_1.lecture.id });
+                yield db_1.db.insert(schema_1.lecture).values(lectureDto);
+                // Query lại để lấy lectureId (dùng name và sectionId để tìm)
+                const createdLecture = yield db_1.db.select({
+                    id: schema_1.lecture.id
+                })
+                    .from(schema_1.lecture)
+                    .where((0, drizzle_orm_1.eq)(schema_1.lecture.name, lectureDto.name))
+                    .limit(1);
+                if (!createdLecture || createdLecture.length === 0) {
+                    return {
+                        message: "Failed to create lecture",
+                        status: 500
+                    };
+                }
                 return {
-                    data: returnVal[0].lectureId,
+                    data: createdLecture[0].id,
                     message: "Lecture created successfully",
                     status: 200
                 };

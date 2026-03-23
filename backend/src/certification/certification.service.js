@@ -161,8 +161,8 @@ class certificationService {
                 const newCert = yield db_1.db.insert(schema_1.certification)
                     .values({
                     name: data.name,
-                    issueDate: data.issueDate,
-                    expDate: data.expDate,
+                    issueDate: new Date(data.issueDate),
+                    expDate: data.expDate ? new Date(data.expDate) : null,
                     courseId: data.courseId,
                     studentId: data.studentId
                 });
@@ -200,7 +200,7 @@ class certificationService {
                     .set({
                     name: data.name,
                     // issueDate: data.issueDate,
-                    expDate: data.expDate,
+                    expDate: data.expDate ? new Date(data.expDate) : null,
                     courseId: data.courseId,
                     studentId: data.studentId
                 })

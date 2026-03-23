@@ -91,16 +91,11 @@ class optionService {
                     status: 404
                 }
             }
-            const updateOption = await db
-            .update(option)
-            .set({
-                option: newOptionStr
-            })
-            .where(and(eq(option.questionId, questionId) , eq(option.option, optionStr)))
-            .returning({
-                questionId: option.questionId,
-                option: option.option
-            })
+            await db.update(option)
+                    .set({
+                        option: newOptionStr
+                    })
+                    .where(and(eq(option.questionId, questionId) , eq(option.option, optionStr)))
 
             return {
                 message: "Successfully updated option",

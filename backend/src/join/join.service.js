@@ -84,7 +84,7 @@ class joinService {
                     .set({
                     progress,
                     GPA,
-                    dateComplete: quizzesCompleted === totalQuizCount ? new Date().toISOString() : null,
+                    dateComplete: quizzesCompleted === totalQuizCount ? new Date() : null,
                 })
                     .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(schema_1.join.courseId, courseId), (0, drizzle_orm_1.eq)(schema_1.join.studentId, studentId)));
             }
@@ -306,26 +306,77 @@ class joinService {
                     .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(schema_1.join.courseId, courseId), (0, drizzle_orm_1.eq)(schema_1.join.studentId, studentId)));
                 if (checkJoin.length > 0) {
                     return {
+                        message: "Bạn đã tham gia khóa học này rồi",
                         data: "Join already exists",
                         status: 400
                     };
                 }
-                const data = yield db_1.db.insert(schema_1.join).values({
+                // Check if course exists
+                const courseExists = yield db_1.db.select({
+                    id: schema_1.course.id
+                })
+                    .from(schema_1.course)
+                    .where((0, drizzle_orm_1.eq)(schema_1.course.id, courseId))
+                    .limit(1);
+                if (courseExists.length === 0) {
+                    return {
+                        message: "Khóa học không tồn tại",
+                        status: 404
+                    };
+                }
+                // Check if student exists
+                const studentExists = yield db_1.db.select({
+                    userId: schema_1.student.userId
+                })
+                    .from(schema_1.student)
+                    .where((0, drizzle_orm_1.eq)(schema_1.student.userId, studentId))
+                    .limit(1);
+                if (studentExists.length === 0) {
+                    return {
+                        message: "Sinh viên không tồn tại",
+                        status: 404
+                    };
+                }
+                yield db_1.db.insert(schema_1.join).values({
                     courseId: courseId,
                     studentId: studentId,
-                    dateStart: new Date().toISOString(),
+                    dateStart: new Date(),
                 });
                 student_service_1.default.updateNumberOfCourseEnroll(studentId);
                 return {
-                    message: "Join created",
+                    message: "Đăng ký khóa học thành công",
                     status: 201,
-                    data
+                    data: {
+                        courseId,
+                        studentId
+                    }
                 };
             }
             catch (error) {
+                const errorMessage = (error === null || error === void 0 ? void 0 : error.message) || "Lỗi khi đăng ký khóa học";
+                // Kiểm tra nếu là lỗi từ trigger (giới hạn 3 khóa học)
+                if (errorMessage.includes('không thể đăng ký thêm') ||
+                    errorMessage.includes('3 khóa đang học')) {
+                    return {
+                        message: errorMessage,
+                        status: 400,
+                        error: errorMessage
+                    };
+                }
+                // Kiểm tra lỗi foreign key
+                if (errorMessage.includes('foreign key') || errorMessage.includes('FOREIGN KEY')) {
+                    return {
+                        message: "Khóa học hoặc sinh viên không tồn tại",
+                        status: 400,
+                        error: errorMessage
+                    };
+                }
+                // Lỗi khác
+                console.error("Error creating join:", error);
                 return {
-                    error: error,
-                    status: 500
+                    message: errorMessage,
+                    status: 500,
+                    error: errorMessage
                 };
             }
         });
@@ -336,26 +387,39 @@ class joinService {
                 // check if exists
                 const checkJoin = yield db_1.db.select({
                     courseId: schema_1.join.courseId,
-                    studentId: schema_1.join.studentId
+                    studentId: schema_1.join.studentId,
+                    progress: schema_1.join.progress
                 })
                     .from(schema_1.join)
                     .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(schema_1.join.courseId, joinDto.courseId), (0, drizzle_orm_1.eq)(schema_1.join.studentId, joinDto.studentId)));
                 if (checkJoin.length === 0) {
                     return {
-                        data: "Join not found",
+                        message: "Không tìm thấy đăng ký khóa học",
                         status: 404
                     };
                 }
+                const oldProgress = checkJoin[0].progress;
+                const wasCompleted = oldProgress === 100;
+                const willBeCompleted = joinDto.progress === 100;
                 yield db_1.db.update(schema_1.join)
                     .set({
-                    dateComplete: joinDto.dateComplete,
-                    dateStart: joinDto.dateStart,
+                    dateComplete: joinDto.dateComplete ? new Date(joinDto.dateComplete) : null,
+                    dateStart: new Date(joinDto.dateStart),
                     progress: joinDto.progress,
                     GPA: joinDto.GPA
                 })
                     .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(schema_1.join.courseId, joinDto.courseId), (0, drizzle_orm_1.eq)(schema_1.join.studentId, joinDto.studentId)));
+                // Cập nhật số lượng khóa học hoàn thành nếu cần
+                if (!wasCompleted && willBeCompleted) {
+                    // Từ chưa hoàn thành -> hoàn thành
+                    student_service_1.default.updateNumberOfCourseComplete(joinDto.studentId);
+                }
+                else if (wasCompleted && !willBeCompleted) {
+                    // Từ hoàn thành -> chưa hoàn thành
+                    student_service_1.default.updateNumberOfCourseComplete(joinDto.studentId);
+                }
                 return {
-                    data: "Join updated",
+                    message: "Cập nhật thông tin khóa học thành công",
                     status: 200
                 };
             }
@@ -373,26 +437,38 @@ class joinService {
                 // check if exists
                 const checkJoin = yield db_1.db.select({
                     courseId: schema_1.join.courseId,
-                    studentId: schema_1.join.studentId
+                    studentId: schema_1.join.studentId,
+                    progress: schema_1.join.progress
                 })
                     .from(schema_1.join)
                     .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(schema_1.join.courseId, courseId), (0, drizzle_orm_1.eq)(schema_1.join.studentId, studentId)));
                 if (checkJoin.length === 0) {
                     return {
-                        data: "Join not found",
+                        message: "Không tìm thấy đăng ký khóa học",
                         status: 404
                     };
                 }
+                // Lưu progress để cập nhật số lượng khóa học
+                const wasCompleted = checkJoin[0].progress === 100;
                 yield db_1.db.delete(schema_1.join)
                     .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(schema_1.join.courseId, courseId), (0, drizzle_orm_1.eq)(schema_1.join.studentId, studentId)));
+                // Cập nhật số lượng khóa học của student
+                // Nếu khóa học đã hoàn thành, giảm numberCoursesCompleted
+                if (wasCompleted) {
+                    student_service_1.default.decreaseNumberOfCourseComplete(studentId);
+                }
+                // Giảm numberCoursesEnrolled
+                student_service_1.default.decreaseNumberOfCourseEnroll(studentId);
                 return {
-                    data: "Join deleted",
+                    message: "Hủy đăng ký khóa học thành công",
                     status: 200
                 };
             }
             catch (error) {
+                const errorMessage = (error === null || error === void 0 ? void 0 : error.message) || "Lỗi khi hủy đăng ký khóa học";
                 return {
-                    error: error,
+                    message: errorMessage,
+                    error: errorMessage,
                     status: 500
                 };
             }

@@ -28,6 +28,26 @@ class CourseController {
         }
     }
 
+    public async debugAllCourses(req: Request, res: Response) {
+        try {
+            // Lấy tất cả khóa học từ database (không join) để debug
+            const allCourses = await courseService.getAllCourses();
+            const coursesWithTeacher = await courseService.getAllCoursesWithTeacherInfo();
+            
+            return res.status(200).json({
+                message: "Debug: All courses in database",
+                totalCourses: allCourses.data?.length || 0,
+                rawCourses: allCourses.data,
+                coursesWithTeacher: coursesWithTeacher.data
+            });
+        } catch (error: any) {
+            return res.status(500).json({
+                message: "Error: " + error.message,
+                status: 500
+            });
+        }
+    }
+
     public async getAllCourseByTeacherId(req: Request, res: Response){
         try {
             const { teacherId } = req.params;
@@ -95,7 +115,7 @@ class CourseController {
             return res.status(newCourse.status).send(newCourse)
         } catch (error) {
             res.status(500).json({
-                message: error,
+                message: error instanceof Error ? error.message : String(error),
                 status: 500
             })
         }

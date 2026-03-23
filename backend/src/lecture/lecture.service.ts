@@ -84,10 +84,25 @@ class lectureService {
 
     public async createLecture(lectureDto: lectureDto){
         try {
-            const returnVal = await db.insert(lecture).values(lectureDto).returning({lectureId: lecture.id})
+            await db.insert(lecture).values(lectureDto)
+            
+            // Query lại để lấy lectureId (dùng name và sectionId để tìm)
+            const createdLecture = await db.select({
+                id: lecture.id
+            })
+            .from(lecture)
+            .where(eq(lecture.name, lectureDto.name))
+            .limit(1)
+
+            if (!createdLecture || createdLecture.length === 0) {
+                return {
+                    message: "Failed to create lecture",
+                    status: 500
+                }
+            }
 
             return {
-                data: returnVal[0].lectureId,
+                data: createdLecture[0].id,
                 message: "Lecture created successfully",
                 status: 200
             }

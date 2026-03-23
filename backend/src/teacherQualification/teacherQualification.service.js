@@ -117,12 +117,16 @@ class teacherQualificationService {
                     teacherId: userId,
                     qualification: qualification
                 };
-                const newQuali = yield db_1.db.insert(schema_1.teacherQualification)
-                    .values(teacherQualificationData)
-                    .returning({
+                yield db_1.db.insert(schema_1.teacherQualification)
+                    .values(teacherQualificationData);
+                // Query lại để lấy dữ liệu đã insert
+                const newQuali = yield db_1.db.select({
                     teacherId: schema_1.teacherQualification.teacherId,
                     qualification: schema_1.teacherQualification.qualification
-                });
+                })
+                    .from(schema_1.teacherQualification)
+                    .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(schema_1.teacherQualification.teacherId, userId), (0, drizzle_orm_1.eq)(schema_1.teacherQualification.qualification, qualification)))
+                    .limit(1);
                 return {
                     status: 200,
                     message: "Successfully",
@@ -159,13 +163,17 @@ class teacherQualificationService {
                     teacherId: userId,
                     qualification: qualification
                 };
-                const newQuali = yield db_1.db.update(schema_1.teacherQualification)
+                yield db_1.db.update(schema_1.teacherQualification)
                     .set(teacherQualificationData)
-                    .where((0, drizzle_orm_1.eq)(schema_1.teacherQualification.teacherId, userId))
-                    .returning({
+                    .where((0, drizzle_orm_1.eq)(schema_1.teacherQualification.teacherId, userId));
+                // Query lại để lấy dữ liệu đã update
+                const newQuali = yield db_1.db.select({
                     teacherId: schema_1.teacherQualification.teacherId,
                     qualification: schema_1.teacherQualification.qualification
-                });
+                })
+                    .from(schema_1.teacherQualification)
+                    .where((0, drizzle_orm_1.eq)(schema_1.teacherQualification.teacherId, userId))
+                    .limit(1);
                 return {
                     status: 200,
                     message: "Successfully",

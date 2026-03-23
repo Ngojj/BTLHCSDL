@@ -75,15 +75,13 @@ class roadMapService {
                 name: roadMapData.name,
                 teacherId: roadMapData.teacherId
             })
-            .returning({
-                id: roadMap.id
-            });
+            .$returningId();
 
 
             // Add courses to roadmap
             let order = 1;
 
-            includeCourseDto.forEach(async (course) => {
+            await Promise.all(includeCourseDto.map(async (course) => {
                 await db.insert(
                     includeCourse
                 )
@@ -92,12 +90,7 @@ class roadMapService {
                     courseId: course.courseId,
                     order: order++
                 })
-                .returning({
-                    rmId: includeCourse.rmId,
-                    courseId: includeCourse.courseId,
-                    order: includeCourse.order
-                });
-            });
+            }));
 
             return {
                 status: 200,

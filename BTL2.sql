@@ -15,8 +15,6 @@ CREATE TABLE `user` (
     `bankAccount` VARCHAR(255) NOT NULL,
     CONSTRAINT chk_user_username
         CHECK (`username` REGEXP '^[A-Za-z0-9_]{4,}$'),
-    CONSTRAINT chk_user_password
-        CHECK (`password` REGEXP '^[A-Za-z0-9!@#$%^&*()_+=-]{6,}$'),
     CONSTRAINT chk_user_email
         CHECK (`email` REGEXP '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$'),
     CONSTRAINT chk_user_role
@@ -103,7 +101,7 @@ CREATE TABLE `section` (
     `timeTocomplete` INT NOT NULL DEFAULT 12,
     `teacherId` INT NOT NULL,
     `courseId` INT NOT NULL,
-    `creTime` DATE NOT NULL DEFAULT (CURRENT_DATE),
+    `creTime` DATE NOT NULL DEFAULT (CURRENT_DATE()),
     CONSTRAINT chk_section_timeTocomplete CHECK (`timeTocomplete` > 0),
     CONSTRAINT fk_section_teacher FOREIGN KEY (`teacherId`)
         REFERENCES `teacher`(`userId`) ON DELETE CASCADE,
@@ -133,7 +131,7 @@ CREATE TABLE `quiz` (
     `duration` INT NOT NULL DEFAULT 10,
     `teacherId` INT NOT NULL,
     `sectionId` INT NOT NULL,
-    `creTime` DATE NOT NULL DEFAULT (CURRENT_DATE),
+    `creTime` DATE NOT NULL DEFAULT (CURRENT_DATE()),
     CONSTRAINT chk_quiz_state CHECK (`state` IN ('opened','closed')),
     CONSTRAINT chk_quiz_attempt CHECK (`attempt` >= 1),
     CONSTRAINT chk_quiz_duration CHECK (`duration` > 0),
@@ -151,7 +149,7 @@ CREATE TABLE `question` (
     `type` VARCHAR(50) NOT NULL DEFAULT 'multiple choice',
     `answer` VARCHAR(255) NOT NULL,
     `content` TEXT NOT NULL,
-    `creTime` DATE NOT NULL DEFAULT (CURRENT_DATE),
+    `creTime` DATE NOT NULL DEFAULT (CURRENT_DATE()),
     `teacherId` INT NOT NULL,
     CONSTRAINT pk_question PRIMARY KEY (`id`,`quizId`),
     CONSTRAINT chk_question_type CHECK (`type` IN ('multiple choice','true/false','short answer')),
@@ -206,7 +204,7 @@ CREATE TABLE `join` (
     `courseId` INT NOT NULL,
     `studentId` INT NOT NULL,
     `dateComplete` DATE,
-    `dateStart` DATE NOT NULL DEFAULT (CURRENT_DATE),
+    `dateStart` DATE NOT NULL DEFAULT (CURRENT_DATE()),
     `progress` INT NOT NULL DEFAULT 0,
     `GPA` DOUBLE,
     CONSTRAINT pk_join PRIMARY KEY (`courseId`,`studentId`),
@@ -233,7 +231,7 @@ CREATE TABLE `interact` (
 CREATE TABLE `certification` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `name` VARCHAR(50) NOT NULL,
-    `issueDate` DATE NOT NULL DEFAULT (CURRENT_DATE),
+    `issueDate` DATE NOT NULL DEFAULT (CURRENT_DATE()),
     `expDate` DATE,
     `courseId` INT NOT NULL,
     `studentId` INT NOT NULL,
@@ -300,7 +298,7 @@ CREATE TABLE `roadCertification` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `name` VARCHAR(50) NOT NULL,
     `expDate` DATE,
-    `issueDate` DATE NOT NULL DEFAULT (CURRENT_DATE),
+    `issueDate` DATE NOT NULL DEFAULT (CURRENT_DATE()),
     `courseId` INT NOT NULL,
     `studentId` INT NOT NULL,
     CONSTRAINT chk_roadCertification_dates CHECK (`expDate` IS NULL OR `expDate` > `issueDate`),
@@ -407,7 +405,7 @@ INSERT INTO `option` (`questionId`, `option`) VALUES
 (2, 'Option A'), (2, 'Option B'), (2, 'Option C'), (2, 'Option D'),
 (3, 'Option A'), (3, 'Option B'), (3, 'Option C'), (3, 'Option D'),
 (4, 'Option A'), (4, 'Option B'), (4, 'Option C'), (4, 'Option D'),
-(5, 'Option A'), (5, 'Option B'), (5, 'Option C'), (5, 'Option D');
+(5, 'Option A'), (5, 'Option B'), (5, 'Option C'), (5, 'Option D'), (5, 'Option E');
 
 -- 10. TABLE `roadMap`
 INSERT INTO `roadMap` (`id`, `instruction`, `description`, `name`, `teacherId`) VALUES

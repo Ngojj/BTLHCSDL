@@ -9,58 +9,6 @@ import { useRecoilState } from 'recoil';
 import { userLoginState } from '@/state';
 import { useEffect } from 'react';
 
-
-const data = {
-  labels: [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December',
-  ],
-  datasets: [
-    {
-      label: 'Enrolled Students',
-      data: [25, 30, 28, 35, 40, 55, 50, 70, 80, 90, 95, 110],
-      borderColor: 'blue',
-      backgroundColor: 'rgba(0, 123, 255, 0.1)',
-      pointBorderColor: 'blue',
-      pointBackgroundColor: 'white',
-      pointBorderWidth: 2,
-      pointRadius: 5,
-      fill: true,
-      tension: 0.4, // Smooth curve
-    },
-  ],
-};
-
-const options = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: {
-      position: 'top' as const,
-    },
-    tooltip: {
-      mode: 'index' as const,
-      intersect: false,
-    },
-  },
-  scales: {
-    x: {
-      title: {
-        display: true,
-        text: 'Month',
-      },
-    },
-    y: {
-      beginAtZero: true,
-      title: {
-        display: true,
-        text: 'Number of Students',
-      },
-    },
-  },
-};
-
-
 const DashBoard = () => {
   const [userLogin, setUserLogin] = useRecoilState(userLoginState)
 
@@ -71,22 +19,28 @@ const DashBoard = () => {
   }, [])
 
   return (
-    <div className="bg-grayBG">
-      <div className="grid grid-cols-12 grid-rows-12 min-h-screen gap-4">
-        {Header(userLogin.lastName + ' ' + userLogin.firstName)}
-        {Sidebar(userLogin.firstName, userLogin.lastName)}
-        {CoursesContent(userLogin.id)}
-        <div className='bg-white row-span-6 col-start-3 col-span-5 mb-4 rounded-xl shadow-xl'>
-          <RevenueChart/>
+    <main className="section-shell py-8">
+      <div className="grid min-h-screen grid-cols-12 gap-6">
+        <div className="col-span-12">
+          {Header(userLogin.lastName + ' ' + userLogin.firstName)}
         </div>
-        <div className='bg-white row-span-6 col-span-5 mb-4 rounded-xl  flex justify-center items-center shadow-xl'>
-            <div className="w-full h-full max-w-full max-h-full mt-50">
+
+        {Sidebar(userLogin.firstName, userLogin.lastName)}
+
+        <section className="col-span-10 grid gap-6">
+          {CoursesContent(userLogin.id)}
+
+          <div className="grid gap-6 lg:grid-cols-2">
+            <div className='rounded-[30px] border border-slate-200 bg-white p-4 shadow-sm'>
+              <RevenueChart/>
+            </div>
+            <div className='rounded-[30px] border border-slate-200 bg-white p-4 shadow-sm'>
               <RegistrationChart />
             </div>
-        </div>
-        
+          </div>
+        </section>
       </div>
-    </div>
+    </main>
   );
 };
 

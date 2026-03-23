@@ -14,19 +14,19 @@ import {
 export const user = mysqlTable("user", {
   id: int("id").autoincrement().primaryKey(),
   email: varchar("email", { length: 255 }).notNull().unique(),
-  firstName: varchar("firstName", { length: 64 }).notNull(),
-  lastName: varchar("lastName", { length: 64 }).notNull(),
+  firstName: varchar("firstName", { length: 255 }).notNull(),
+  lastName: varchar("lastName", { length: 255 }).notNull(),
   username: varchar("username", { length: 64 }).notNull().unique(),
-  password: varchar("password", { length: 255 }).notNull().unique(),
-  role: varchar("role", { length: 255 }).notNull(),
-  bankName: varchar("bankName", { length: 255 }).notNull(),
+  password: varchar("password", { length: 64 }).notNull(),
+  role: varchar("role", { length: 20 }).notNull(),
+  bankName: varchar("bankName", { length: 20 }).notNull(),
   bankAccount: varchar("bankAccount", { length: 255 }).notNull(),
 });
 
 /* ============= STUDENT ============= */
 
 export const student = mysqlTable("student", {
-  userId: int("userId").notNull().references(() => user.id).primaryKey(),
+  userId: int("userId").notNull().references(() => user.id, { onDelete: "cascade" }).primaryKey(),
   studentId: varchar("studentId", { length: 10 }).notNull().unique(),
   enrollmentDate: date("enrollmentDate").notNull(),
   numberCoursesEnrolled: int("numberCoursesEnrolled").notNull().default(0),
@@ -36,7 +36,7 @@ export const student = mysqlTable("student", {
 /* ============= TEACHER ============= */
 
 export const teacher = mysqlTable("teacher", {
-  userId: int("userId").notNull().references(() => user.id).primaryKey(),
+  userId: int("userId").notNull().references(() => user.id, { onDelete: "cascade" }).primaryKey(),
   teacherId: varchar("teacherId", { length: 10 }).notNull().unique(),
 });
 
@@ -63,8 +63,8 @@ export const course = mysqlTable("course", {
   name: varchar("name", { length: 80 }).notNull(),
   language: varchar("language", { length: 255 }).notNull(),
   description: text("description").notNull(),
-  teacherId: int("teacherId").notNull().references(() => teacher.userId),
-  creTime: date("creTime").notNull().default(sql`CURRENT_TIMESTAMP`),
+  teacherId: int("teacherId").notNull().references(() => teacher.userId, { onDelete: "cascade" }),
+  creTime: date("creTime").notNull().default(sql`(CURRENT_DATE())`),
   avgQuiz: int("avgQuiz").notNull().default(0),
   price: int("price").notNull().default(0),
 });
@@ -74,7 +74,7 @@ export const course = mysqlTable("course", {
 export const courseTopic = mysqlTable(
   "courseTopic",
   {
-    courseId: int("courseId").notNull().references(() => course.id),
+    courseId: int("courseId").notNull().references(() => course.id, { onDelete: "cascade" }),
     topic: varchar("topic", { length: 255 }).notNull(),
   },
   (table) => ({
@@ -92,22 +92,22 @@ export const section = mysqlTable("section", {
   name: varchar("name", { length: 255 }).notNull(),
   numOfLecture: int("numOfLecture").notNull().default(0),
   timeToComplete: int("timeTocomplete").notNull().default(12),
-  teacherId: int("teacherId").notNull().references(() => teacher.userId),
-  courseId: int("courseId").notNull().references(() => course.id),
-  creTime: date("creTime").notNull().default(sql`CURRENT_TIMESTAMP`),
+  teacherId: int("teacherId").notNull().references(() => teacher.userId, { onDelete: "cascade" }),
+  courseId: int("courseId").notNull().references(() => course.id, { onDelete: "cascade" }),
+  creTime: date("creTime").notNull().default(sql`(CURRENT_DATE())`),
 });
 
 /* ============= QUIZ ============= */
 
 export const quiz = mysqlTable("quiz", {
   id: int("id").autoincrement().primaryKey(),
-  name: varchar("name", { length: 512 }).notNull().unique(),
-  state: varchar("state", { length: 255 }).notNull().default("opened"),
+  name: varchar("name", { length: 512 }).notNull(),
+  state: varchar("state", { length: 20 }).notNull().default("opened"),
   attempt: int("attempt").notNull().default(1),
   duration: int("duration").notNull().default(10),
-  teacherId: int("teacherId").notNull().references(() => teacher.userId),
-  sectionId: int("sectionId").notNull().references(() => section.id),
-  creTime: date("creTime").notNull().default(sql`CURRENT_TIMESTAMP`),
+  teacherId: int("teacherId").notNull().references(() => teacher.userId, { onDelete: "cascade" }),
+  sectionId: int("sectionId").notNull().references(() => section.id, { onDelete: "cascade" }),
+  creTime: date("creTime").notNull().default(sql`(CURRENT_DATE())`),
 });
 
 /* ============= QUESTION ============= */
@@ -115,13 +115,13 @@ export const quiz = mysqlTable("quiz", {
 export const question = mysqlTable(
   "question",
   {
-    id: int("id").autoincrement(),
-    quizId: int("quizId").notNull().references(() => quiz.id),
-    type: varchar("type", { length: 255 }).notNull().default("multiple choice"),
+    id: int("id").notNull(),
+    quizId: int("quizId").notNull().references(() => quiz.id, { onDelete: "cascade" }),
+    type: varchar("type", { length: 50 }).notNull().default("multiple choice"),
     answer: varchar("answer", { length: 255 }).notNull(),
     content: text("content").notNull(),
-    creTime: date("creTime").notNull().default(sql`CURRENT_TIMESTAMP`),
-    teacherId: int("teacherId").notNull().references(() => teacher.userId),
+    creTime: date("creTime").notNull().default(sql`(CURRENT_DATE())`),
+    teacherId: int("teacherId").notNull().references(() => teacher.userId, { onDelete: "cascade" }),
   },
   (table) => ({
     pk: primaryKey({
@@ -136,8 +136,8 @@ export const question = mysqlTable(
 export const option = mysqlTable(
   "option",
   {
-    questionId: int("questionId").notNull().references(() => question.id),
-    option: varchar("option", { length: 1024 }).notNull(),
+    questionId: int("questionId").notNull().references(() => question.id, { onDelete: "cascade" }),
+    option: varchar("option", { length: 528 }).notNull(),
   },
   (table) => ({
     pk: primaryKey({
@@ -154,7 +154,7 @@ export const roadMap = mysqlTable("roadMap", {
   instruction: text("instruction").notNull(),
   description: text("description"),
   name: varchar("name", { length: 255 }).notNull(),
-  teacherId: int("teacherId").notNull().references(() => teacher.userId),
+  teacherId: int("teacherId").notNull().references(() => teacher.userId, { onDelete: "cascade" }),
 });
 
 /* ============= ROAD CERTIFICATION ============= */
@@ -163,9 +163,9 @@ export const roadCertification = mysqlTable("roadCertification", {
   id: int("id").autoincrement().primaryKey(),
   name: varchar("name", { length: 50 }).notNull(),
   expDate: date("expDate"),
-  issueDate: date("issueDate").notNull().default(sql`CURRENT_TIMESTAMP`),
-  courseId: int("courseId").notNull().references(() => course.id),
-  studentId: int("studentId").notNull().references(() => student.userId),
+  issueDate: date("issueDate").notNull().default(sql`(CURRENT_DATE())`),
+  courseId: int("courseId").notNull().references(() => course.id, { onDelete: "cascade" }),
+  studentId: int("studentId").notNull().references(() => student.userId, { onDelete: "cascade" }),
 });
 
 /* ============= REQUIRE COURSE ============= */
@@ -173,8 +173,8 @@ export const roadCertification = mysqlTable("roadCertification", {
 export const requireCourse = mysqlTable(
   "requireCourse",
   {
-    courseId: int("courseId").notNull().references(() => course.id),
-    rCourseId: int("rCourseId").notNull().references(() => course.id),
+    courseId: int("courseId").notNull().references(() => course.id, { onDelete: "cascade" }),
+    rCourseId: int("rCourseId").notNull().references(() => course.id, { onDelete: "cascade" }),
   },
   (table) => ({
     pk: primaryKey({
@@ -189,10 +189,10 @@ export const requireCourse = mysqlTable(
 export const certification = mysqlTable("certification", {
   id: int("id").autoincrement().primaryKey(),
   name: varchar("name", { length: 50 }).notNull(),
-  issueDate: date("issueDate").notNull().default(sql`CURRENT_TIMESTAMP`),
+  issueDate: date("issueDate").notNull().default(sql`(CURRENT_DATE())`),
   expDate: date("expDate"),
-  courseId: int("courseId").notNull().references(() => course.id),
-  studentId: int("studentId").notNull().references(() => student.userId),
+  courseId: int("courseId").notNull().references(() => course.id, { onDelete: "cascade" }),
+  studentId: int("studentId").notNull().references(() => student.userId, { onDelete: "cascade" }),
 });
 
 /* ============= JOIN ============= */
@@ -200,10 +200,10 @@ export const certification = mysqlTable("certification", {
 export const join = mysqlTable(
   "join",
   {
-    courseId: int("courseId").notNull().references(() => course.id),
-    studentId: int("studentId").notNull().references(() => student.userId),
+    courseId: int("courseId").notNull().references(() => course.id, { onDelete: "cascade" }),
+    studentId: int("studentId").notNull().references(() => student.userId, { onDelete: "cascade" }),
     dateComplete: date("dateComplete"),
-    dateStart: date("dateStart").notNull().default(sql`CURRENT_TIMESTAMP`),
+    dateStart: date("dateStart").notNull().default(sql`(CURRENT_DATE())`),
     progress: int("progress").notNull().default(0),
     GPA: double("GPA"),
   },
@@ -212,7 +212,6 @@ export const join = mysqlTable(
       columns: [table.courseId, table.studentId],
       name: "pk_join",
     }),
-    checkGPA: sql`CHECK (${table.GPA} >= 0 AND ${table.GPA} <= 10)`,
   })
 );
 
@@ -221,10 +220,10 @@ export const join = mysqlTable(
 export const dO = mysqlTable(
   "dO",
   {
-    quizId: int("quizId").notNull().references(() => quiz.id),
-    studentId: int("studentId").notNull().references(() => student.userId),
+    quizId: int("quizId").notNull().references(() => quiz.id, { onDelete: "cascade" }),
+    studentId: int("studentId").notNull().references(() => student.userId, { onDelete: "cascade" }),
     score: double("score"),
-    attemptOrder: int("attemptOrder").notNull(),
+    attemptOrder: int("attemptOrder").notNull().default(1),
   },
   (table) => ({
     pk: primaryKey({
@@ -239,9 +238,9 @@ export const dO = mysqlTable(
 export const answerRecord = mysqlTable(
   "answerRecord",
   {
-    quizId: int("quizId").notNull().references(() => quiz.id),
-    studentId: int("studentId").notNull().references(() => student.userId),
-    questionId: int("questionId").notNull().references(() => question.id),
+    quizId: int("quizId").notNull().references(() => quiz.id, { onDelete: "cascade" }),
+    studentId: int("studentId").notNull().references(() => student.userId, { onDelete: "cascade" }),
+    questionId: int("questionId").notNull().references(() => question.id, { onDelete: "cascade" }),
     studentAns: text("studentAns"),
   },
   (table) => ({
@@ -257,10 +256,10 @@ export const answerRecord = mysqlTable(
 export const lecture = mysqlTable("lecture", {
   id: int("id").autoincrement().primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
-  state: varchar("state", { length: 255 }).notNull().default("uncomplete"),
+  state: varchar("state", { length: 20 }).notNull().default("uncomplete"),
   material: varchar("material", { length: 255 }),
   reference: varchar("reference", { length: 255 }),
-  sectionId: int("sectionId").notNull().references(() => section.id),
+  sectionId: int("sectionId").notNull().references(() => section.id, { onDelete: "cascade" }),
 });
 
 /* ============= INTERACT ============= */
@@ -268,8 +267,8 @@ export const lecture = mysqlTable("lecture", {
 export const interact = mysqlTable(
   "interact",
   {
-    lectureId: int("lectureId").notNull().references(() => lecture.id),
-    studentId: int("studentId").notNull().references(() => student.userId),
+    lectureId: int("lectureId").notNull().references(() => lecture.id, { onDelete: "cascade" }),
+    studentId: int("studentId").notNull().references(() => student.userId, { onDelete: "cascade" }),
   },
   (table) => ({
     pk: primaryKey({
@@ -284,8 +283,8 @@ export const interact = mysqlTable(
 export const includeCourse = mysqlTable(
   "includeCourse",
   {
-    rmId: int("rmId").notNull().references(() => roadMap.id),
-    courseId: int("courseId").notNull().references(() => course.id),
+    rmId: int("rmId").notNull().references(() => roadMap.id, { onDelete: "cascade" }),
+    courseId: int("courseId").notNull().references(() => course.id, { onDelete: "cascade" }),
     order: int("order").notNull(),
   },
   (table) => ({
@@ -298,10 +297,19 @@ export const includeCourse = mysqlTable(
 
 /* ============= VIEW ROADMAP ============= */
 
-export const viewRoadMap = mysqlTable("viewRoadMap", {
-  rmId: int("rmId").notNull().references(() => roadMap.id),
-  studentId: int("studentId").notNull().references(() => student.userId),
-  suitability: int("suitability").notNull().default(0),
-  timeSuitabilty: int("timeSuitability").notNull().default(0),
-  courseSui: int("courseSui").notNull().default(0),
-});
+export const viewRoadMap = mysqlTable(
+  "viewRoadMap",
+  {
+    rmId: int("rmId").notNull().references(() => roadMap.id, { onDelete: "cascade" }),
+    studentId: int("studentId").notNull().references(() => student.userId, { onDelete: "cascade" }),
+    suitability: int("suitability").notNull().default(0),
+    timeSuitabilty: int("timeSuitability").notNull().default(0),
+    courseSui: int("courseSui").notNull().default(0),
+  },
+  (table) => ({
+    pk: primaryKey({
+      columns: [table.rmId, table.studentId],
+      name: "pk_viewRoadMap",
+    }),
+  })
+);

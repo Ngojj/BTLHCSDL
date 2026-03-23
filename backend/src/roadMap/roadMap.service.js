@@ -80,24 +80,17 @@ class roadMapService {
                     name: roadMapData.name,
                     teacherId: roadMapData.teacherId
                 })
-                    .returning({
-                    id: schema_1.roadMap.id
-                });
+                    .$returningId();
                 // Add courses to roadmap
                 let order = 1;
-                includeCourseDto.forEach((course) => __awaiter(this, void 0, void 0, function* () {
+                yield Promise.all(includeCourseDto.map((course) => __awaiter(this, void 0, void 0, function* () {
                     yield db_1.db.insert(schema_1.includeCourse)
                         .values({
                         rmId: newRoadMap[0].id,
                         courseId: course.courseId,
                         order: order++
-                    })
-                        .returning({
-                        rmId: schema_1.includeCourse.rmId,
-                        courseId: schema_1.includeCourse.courseId,
-                        order: schema_1.includeCourse.order
                     });
-                }));
+                })));
                 return {
                     status: 200,
                     message: "Roadmap created successfully"

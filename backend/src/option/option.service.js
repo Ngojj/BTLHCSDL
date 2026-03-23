@@ -103,16 +103,11 @@ class optionService {
                         status: 404
                     };
                 }
-                const updateOption = yield db_1.db
-                    .update(schema_1.option)
+                yield db_1.db.update(schema_1.option)
                     .set({
                     option: newOptionStr
                 })
-                    .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(schema_1.option.questionId, questionId), (0, drizzle_orm_1.eq)(schema_1.option.option, optionStr)))
-                    .returning({
-                    questionId: schema_1.option.questionId,
-                    option: schema_1.option.option
-                });
+                    .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(schema_1.option.questionId, questionId), (0, drizzle_orm_1.eq)(schema_1.option.option, optionStr)));
                 return {
                     message: "Successfully updated option",
                     status: 200

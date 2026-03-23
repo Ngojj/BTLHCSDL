@@ -1,8 +1,8 @@
 export interface joinDto{
     courseId: number;
     studentId: number;
-    dateComplete: string;
+    dateComplete: string | null;
     dateStart: string;
     progress: number;
-    GPA: number;
+    GPA: number | null;
 }
