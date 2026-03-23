@@ -22,7 +22,7 @@ const AvatarDropdown: React.FC<AvatarDropdownProps> = ({ avatar, name, email }) 
   };
 
   const handeLogout = () => {
-    const confirm = window.confirm("Ban co chac chan muon dang xuat khong?");
+    const confirm = window.confirm("Bạn có chắc chắn muốn đăng xuất không?");
     if (!confirm) return;
     sessionStorage.removeItem("userLogin");
     setUserLogin(defaultUserLogin);
@@ -64,7 +64,7 @@ const AvatarDropdown: React.FC<AvatarDropdownProps> = ({ avatar, name, email }) 
                 className="block px-4 py-2 hover:bg-gray-100"
                 onClick={() => router.push(profilePath)}
               >
-                Ho so
+                Hồ sơ
               </a>
             </li>
           </ul>
@@ -74,7 +74,7 @@ const AvatarDropdown: React.FC<AvatarDropdownProps> = ({ avatar, name, email }) 
               className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
               onClick={() => handeLogout()}
             >
-              Dang xuat
+              Đăng xuất
             </a>
           </div>
         </div>

@@ -224,12 +224,9 @@ const EditCoursePage = ({ params }: { params: Promise<{ courseId: string }> }) =
         }
     };
 
-    if (loading) {
-        return <LoadingOverlay />
-    }
-
     return (
         <main className="section-shell py-8">
+            {loading && <LoadingOverlay />}
             <div className="grid min-h-screen grid-cols-12 gap-6">
                 <div className="col-span-12">
                     {Header(userLogin.lastName + ' ' + userLogin.firstName)}

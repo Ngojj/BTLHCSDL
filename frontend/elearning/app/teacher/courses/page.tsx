@@ -74,17 +74,17 @@ const ManageCourses = () => {
   const avgPrice = totalCourses > 0 ? Math.round(totalRevenue / totalCourses) : 0;
 
   const handleDeleteCourse = async (id: number, name: string) => {
-    if (window.confirm(`Ban co chac muon xoa khoa hoc ${name}?`)) {
+    if (window.confirm(`Bạn có chắc muốn xóa khóa học ${name}?`)) {
       try {
         const res = await request.del(`/course/delete/id/${id}`);
         if (res.message === 'success') {
           setCourses(courses.filter((course) => course.courseId !== id));
         } else {
-          alert('Khong the xoa khoa hoc.');
+          alert('Không thể xóa khóa học.');
         }
       } catch (error) {
         console.log('Cannot delete course', error);
-        alert('Khong the xoa khoa hoc.');
+        alert('Không thể xóa khóa học.');
       }
     }
   };
@@ -100,10 +100,10 @@ const ManageCourses = () => {
               Course Manager
             </span>
             <h1 className="mt-4 text-4xl font-semibold tracking-tight text-slate-900">
-              Quan ly khoa hoc
+              Quản lý khóa học
             </h1>
             <p className="mt-3 text-sm leading-7 text-slate-600 sm:text-base">
-              Theo doi khoa hoc, cap nhat va xoa nhanh trong mot bo cuc dong bo voi dashboard.
+              Theo dõi khóa học, cập nhật và xóa nhanh trong một bố cục đồng bộ với dashboard.
             </p>
           </div>
 
@@ -111,7 +111,7 @@ const ManageCourses = () => {
             <input
               type="search"
               className="block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-300 focus:bg-white focus:ring-4 focus:ring-sky-100"
-              placeholder="Tim theo ten khoa hoc..."
+              placeholder="Tìm theo tên khóa học..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -120,22 +120,22 @@ const ManageCourses = () => {
               className="button-primary whitespace-nowrap"
               onClick={() => router.push('/teacher/create')}
             >
-              Tao khoa hoc
+              Tạo khóa học
             </button>
           </div>
         </div>
 
         <div className="mt-6 grid gap-4 sm:grid-cols-3">
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Tong khoa hoc</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Tổng khóa học</p>
             <p className="mt-2 text-3xl font-semibold text-slate-900">{totalCourses}</p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Tong hoc phi</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Tổng học phí</p>
             <p className="mt-2 text-2xl font-semibold text-slate-900">{formatPrice(totalRevenue)}</p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Hoc phi trung binh</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Học phí trung bình</p>
             <p className="mt-2 text-2xl font-semibold text-slate-900">{formatPrice(avgPrice)}</p>
           </div>
         </div>
@@ -146,11 +146,11 @@ const ManageCourses = () => {
           <table className="min-w-full text-left text-sm text-slate-600">
             <thead className="bg-slate-50 text-xs uppercase tracking-[0.18em] text-slate-500">
               <tr>
-                <th className="px-6 py-5 font-semibold">Khoa hoc</th>
-                <th className="px-6 py-5 font-semibold">Ngon ngu</th>
-                <th className="px-6 py-5 font-semibold">Hoc phi</th>
-                <th className="px-6 py-5 font-semibold">Ngay tao</th>
-                <th className="px-6 py-5 text-center font-semibold">Thao tac</th>
+                <th className="px-6 py-5 font-semibold">Khóa học</th>
+                <th className="px-6 py-5 font-semibold">Ngôn ngữ</th>
+                <th className="px-6 py-5 font-semibold">Học phí</th>
+                <th className="px-6 py-5 font-semibold">Ngày tạo</th>
+                <th className="px-6 py-5 text-center font-semibold">Thao tác</th>
               </tr>
             </thead>
             <tbody>
@@ -171,14 +171,14 @@ const ManageCourses = () => {
                           onClick={() => router.push(`/teacher/edit_course/${course.courseId}`)}
                           className="rounded-xl border border-sky-200 bg-sky-50 px-4 py-2 text-xs font-semibold text-sky-700 transition hover:bg-sky-100"
                         >
-                          Sua
+                          Sửa
                         </button>
                         <button
                           type="button"
                           onClick={async () => await handleDeleteCourse(course.courseId, course.courseName)}
                           className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-xs font-semibold text-rose-700 transition hover:bg-rose-100"
                         >
-                          Xoa
+                          Xóa
                         </button>
                       </div>
                     </td>
@@ -187,7 +187,7 @@ const ManageCourses = () => {
               ) : (
                 <tr>
                   <td colSpan={5} className="px-6 py-14 text-center text-slate-500">
-                    {searchTerm ? 'Khong tim thay khoa hoc phu hop.' : 'Chua co khoa hoc nao.'}
+                    {searchTerm ? 'Không tìm thấy khóa học phù hợp.' : 'Chưa có khóa học nào.'}
                   </td>
                 </tr>
               )}
@@ -198,7 +198,7 @@ const ManageCourses = () => {
 
       <div className="mt-6">
         <button className="button-secondary" onClick={() => router.push('/teacher')}>
-          Quay lai dashboard
+          Quay lại dashboard
         </button>
       </div>
     </main>

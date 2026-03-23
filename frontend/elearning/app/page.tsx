@@ -7,7 +7,7 @@ import BKNavbar2 from "@/components/BKNavbar2";
 import { useRouter } from "next/navigation";
 import { useRecoilState } from "recoil";
 import { userLoginState } from "@/state";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import * as request from "@/app/axios/axios";
 import { CourseWithTeacherNameDto } from "./dtos/course.dto";
 
@@ -35,9 +35,29 @@ const highlights = [
 export default function Home() {
   const [userLogin, setUserLogin] = useRecoilState(userLoginState);
   const [course, setCourse] = useState<CourseWithTeacherNameDto[]>([]);
+  const [courseSearchTerm, setCourseSearchTerm] = useState("");
   const [isLoadingCourses, setIsLoadingCourses] = useState(true);
+  const role = String(userLogin.role || "").toLowerCase();
   const isLoggedIn = userLogin.id !== "";
+  const isTeacher = role === "teacher";
   const router = useRouter();
+
+  const filteredCourses = useMemo(() => {
+    const keyword = courseSearchTerm.trim().toLowerCase();
+    if (!keyword) return course;
+
+    return course.filter((c) => {
+      const courseName = String(c.courseName || "").toLowerCase();
+      const teacherName = `${c.teacherFirstName || ""} ${c.teacherLastName || ""}`.toLowerCase();
+      const description = String(c.description || "").toLowerCase();
+
+      return (
+        courseName.includes(keyword) ||
+        teacherName.includes(keyword) ||
+        description.includes(keyword)
+      );
+    });
+  }, [course, courseSearchTerm]);
 
   const fetchCourse = async () => {
     try {
@@ -92,16 +112,16 @@ export default function Home() {
                       <button
                         type="button"
                         className="button-primary"
-                        onClick={() => router.push("/student/mycourse")}
+                        onClick={() => router.push(isTeacher ? "/teacher" : "/student/mycourse")}
                       >
-                        Vào khu học tập
+                        {isTeacher ? "Vào dashboard teacher" : "Vào khu học tập"}
                       </button>
                       <button
                         type="button"
                         className="button-secondary"
-                        onClick={() => router.push("/student/roadmap")}
+                        onClick={() => router.push(isTeacher ? "/teacher/courses" : "/student/roadmap")}
                       >
-                        Xem lộ trình
+                        {isTeacher ? "Quản lý khóa học" : "Xem lộ trình"}
                       </button>
                     </>
                   ) : (
@@ -203,10 +223,27 @@ export default function Home() {
                 <button
                   type="button"
                   className="button-secondary"
-                  onClick={() => isLoggedIn ? router.push("/student/mycourse") : router.push("/signup")}
+                  onClick={() =>
+                    isLoggedIn
+                      ? router.push(isTeacher ? "/teacher/courses" : "/student/mycourse")
+                      : router.push("/signup")
+                  }
                 >
-                  {isLoggedIn ? "Xem khóa học của tôi" : "Đăng ký để truy cập"}
+                  {isLoggedIn ? (isTeacher ? "Quản lý khóa học" : "Xem khóa học của tôi") : "Đăng ký để truy cập"}
                 </button>
+              </div>
+
+              <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <input
+                  type="search"
+                  value={courseSearchTerm}
+                  onChange={(e) => setCourseSearchTerm(e.target.value)}
+                  placeholder="Tìm khóa học theo tên, giảng viên, mô tả..."
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-300 focus:bg-white focus:ring-4 focus:ring-sky-100 sm:max-w-md"
+                />
+                <p className="text-sm text-slate-500">
+                  Đang hiển thị {Math.min(filteredCourses.length, 8)}/{filteredCourses.length} khóa học phù hợp
+                </p>
               </div>
 
               <div className="mt-8 min-h-[22rem]">
@@ -219,9 +256,9 @@ export default function Home() {
                       />
                     ))}
                   </div>
-                ) : course.length > 0 ? (
+                ) : filteredCourses.length > 0 ? (
                   <div className="grid gap-6 md:grid-cols-2">
-                    {course.slice(0, 4).map((cour) => (
+                    {filteredCourses.slice(0, 8).map((cour) => (
                       <CourseCard
                         key={cour.courseId}
                         courseName={cour.courseName}
@@ -234,7 +271,9 @@ export default function Home() {
                   </div>
                 ) : (
                   <div className="flex min-h-[22rem] items-center justify-center rounded-[28px] border border-dashed border-slate-300 bg-slate-50 p-10 text-center text-slate-500">
-                    Hệ thống chưa có khóa học nào để hiển thị hoặc dữ liệu hiện tại đang trống.
+                    {courseSearchTerm
+                      ? "Không tìm thấy khóa học phù hợp với từ khóa bạn vừa nhập."
+                      : "Hệ thống chưa có khóa học nào để hiển thị hoặc dữ liệu hiện tại đang trống."}
                   </div>
                 )}
               </div>
@@ -247,3 +286,6 @@ export default function Home() {
     </>
   );
 }
+
+
+

@@ -108,7 +108,7 @@ const RegistrationChart = () => {
                 setCourses([]);
             }
         } catch (error) {
-            console.log("Khong the tai du lieu dang ky", error);
+            console.log("Không thể tải dữ liệu đăng ký", error);
             setCourses([]);
         }
     };
@@ -123,7 +123,7 @@ const RegistrationChart = () => {
     if (courses.length === 0) {
         return (
             <div className="bg-white rounded-lg p-6 h-max text-center text-slate-500">
-                Chua co du lieu dang ky de hien thi.
+                Chưa có dữ liệu đăng ký để hiển thị.
             </div>
         );
     }
@@ -225,7 +225,7 @@ const RegistrationChart = () => {
 
     return (
         <div className="bg-white rounded-lg p-6 h-max">
-            <h2 className="text-2xl font-bold mb-20 text-center">Số lượng học sinh đăng kí</h2>
+            <h2 className="text-2xl font-bold mb-20 text-center">Số lượng học sinh đăng ký</h2>
             <Line data={dataConfig} options={options} />
         </div>
     );

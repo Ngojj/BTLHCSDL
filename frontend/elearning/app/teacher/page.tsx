@@ -8,15 +8,26 @@ import RegistrationChart from './teacher_components/studentchart';
 import { useRecoilState } from 'recoil';
 import { userLoginState } from '@/state';
 import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 const DashBoard = () => {
   const [userLogin, setUserLogin] = useRecoilState(userLoginState)
+  const router = useRouter()
 
   useEffect(() => {
     const userFromSessionRaw = sessionStorage.getItem('userLogin')
-    if(!userFromSessionRaw) return
-    setUserLogin(JSON.parse(userFromSessionRaw))  
-  }, [])
+    if(!userFromSessionRaw) {
+      router.push('/login')
+      return
+    }
+
+    const parsedUser = JSON.parse(userFromSessionRaw)
+    setUserLogin(parsedUser)
+
+    if (String(parsedUser.role || '').toLowerCase() !== 'teacher') {
+      router.push('/')
+    }
+  }, [router, setUserLogin])
 
   return (
     <main className="section-shell py-8">

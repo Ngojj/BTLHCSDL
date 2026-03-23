@@ -105,7 +105,7 @@ const RevenueChart = () => {
                 setCourses([]);
             }
         } catch (error) {
-            console.log("Khong the tai du lieu doanh thu", error);
+            console.log("Không thể tải dữ liệu doanh thu", error);
             setCourses([]);
         }
     };
@@ -119,7 +119,7 @@ const RevenueChart = () => {
     if (courses.length === 0) {
         return (
             <div className="bg-white rounded-lg p-6 h-max text-center text-slate-500">
-                Chua co du lieu doanh thu de hien thi.
+                Chưa có dữ liệu doanh thu để hiển thị.
             </div>
         );
     }

@@ -23,14 +23,14 @@ const BKNavbar2 = () => {
         >
           <Image
             src="https://lms.hcmut.edu.vn/pluginfile.php/3/theme_academi/logo/1725955904/logoBK.png"
-            alt="Bach Khoa"
+            alt="Bách Khoa"
             width={46}
             height={46}
             className="h-11 w-11 object-contain"
           />
           <div>
-            <p className="text-sm font-semibold text-slate-900">Bach Khoa E-Learning</p>
-            <p className="text-xs text-slate-500">Khong gian hoc tap cua ban</p>
+            <p className="text-sm font-semibold text-slate-900">Bách Khoa E-Learning</p>
+            <p className="text-xs text-slate-500">Không gian học tập của bạn</p>
           </div>
         </button>
 
@@ -39,7 +39,7 @@ const BKNavbar2 = () => {
             className="text-sm font-medium text-slate-600 transition hover:text-sky-800"
             onClick={() => router.push("/")}
           >
-            Trang chu
+            Trang chủ
           </button>
 
           {isTeacher ? (
@@ -54,7 +54,7 @@ const BKNavbar2 = () => {
                 className="text-sm font-medium text-slate-600 transition hover:text-sky-800"
                 onClick={() => router.push("/teacher/courses")}
               >
-                Quan ly khoa hoc
+                Quản lý khóa học
               </button>
             </>
           ) : (
@@ -63,13 +63,13 @@ const BKNavbar2 = () => {
                 className="text-sm font-medium text-slate-600 transition hover:text-sky-800"
                 onClick={() => router.push("/student/mycourse")}
               >
-                Khoa hoc cua toi
+                Khóa học của tôi
               </button>
               <button
                 className="text-sm font-medium text-slate-600 transition hover:text-sky-800"
                 onClick={() => router.push("/student/roadmap")}
               >
-                Lo trinh
+                Lộ trình
               </button>
             </>
           )}
