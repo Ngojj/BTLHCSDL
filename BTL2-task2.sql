@@ -4,7 +4,10 @@ DROP PROCEDURE IF EXISTS insert_user;
 DROP PROCEDURE IF EXISTS update_user;
 DROP PROCEDURE IF EXISTS delete_user;
 
-
+DROP TRIGGER IF EXISTS trg_check_max_enrollment;
+DROP TRIGGER IF EXISTS trg_update_enrollment_insert;
+DROP TRIGGER IF EXISTS trg_update_enrollment_delete;
+DROP PROCEDURE IF EXISTS calculate_enrolled_courses;
 DELIMITER $$
 
 -- =========================================================
