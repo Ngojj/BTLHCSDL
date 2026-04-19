@@ -31,17 +31,22 @@ function CourseCard(props: any) {
 
   const handlePaid = async (courseId: string) => {
     try {
-      const response = await request.post('/join/create', {
+      const response = await request.post('/payment/create-link', {
         courseId: Number(courseId),
-        studentId: Number(user.id)
+        studentId: Number(user.id),
+        price: props.price,
+        courseName: props.courseName
       });
-      setPaymentModal(false);
-      alert(response.message || "Thanh toán thành công.");
+      
+      if (response.checkoutUrl) {
+        window.location.href = response.checkoutUrl;
+      } else {
+        alert("Không nhận được link thanh toán.");
+        setPaymentModal(false);
+      }
     } catch (e: any) {
       console.error("Payment error:", e);
-      const errorMessage = e.response?.data?.message ||
-        (e.response?.data?.data === "Join already exists" ? "Bạn đã tham gia khóa học này." : null) ||
-        "Không thể thanh toán vào lúc này. Vui lòng thử lại.";
+      const errorMessage = e.response?.data?.message || "Không thể tạo link thanh toán vào lúc này. Vui lòng thử lại.";
       alert(errorMessage);
       setPaymentModal(false);
     }

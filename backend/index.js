@@ -31,10 +31,22 @@ const viewRoadMap_route_1 = __importDefault(require("./src/viewRoadMap/viewRoadM
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const port = process.env.PORT || 4000;
+const allowedOrigins = (process.env.CORS_ORIGIN || "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
 if (!process.env.TOKEN_SECRET) {
     throw new Error("Missing TOKEN_SECRET in backend .env");
 }
-app.use((0, cors_1.default)()); // Enable CORS
+app.use((0, cors_1.default)({
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+            callback(null, true);
+            return;
+        }
+        callback(new Error("Not allowed by CORS"));
+    },
+}));
 app.use(express_1.default.json());
 app.use('/user', user_route_1.default);
 app.use('/student', student_route_1.default);

@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "npx tsc",
     "start": "node dist/index.js",
-    "dev": "nodemon src/index.ts",
+    "dev": "nodemon index.ts",
     "generate": "drizzle-kit generate",
     "create:tables": "ts-node --files ./drizzle/migrator.ts",
     "studio": "drizzle-kit studio"
@@ -16,6 +16,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@payos/node": "^2.0.5",
     "backend": "file:",
     "bcrypt": "^5.1.1",
     "cors": "^2.8.5",

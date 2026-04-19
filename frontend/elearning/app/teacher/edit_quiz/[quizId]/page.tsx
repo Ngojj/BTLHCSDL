@@ -51,7 +51,7 @@ const EditQuizPage = ({ params }: { params: Promise<{ quizId: string }> }) => {
     
         try {
             // Send updated content to the API
-            await request.patch("http://localhost:4000/question/update", {
+            await request.patch("/question/update", {
                 id: questionToEdit.id,
                 quizId: rtnParams.quizId,
                 content: newContent,
@@ -75,7 +75,7 @@ const EditQuizPage = ({ params }: { params: Promise<{ quizId: string }> }) => {
     const handleDeleteQuestion = async (questionId: number) => {
         try {
             // Call the API to delete the question
-            await request.del(`http://localhost:4000/question/delete/id/${questionId}`);
+            await request.del(`/question/delete/id/${questionId}`);
             console.log(`Question with ID ${questionId} deleted successfully.`);
     
             // Remove the deleted question from the state
@@ -98,7 +98,7 @@ const EditQuizPage = ({ params }: { params: Promise<{ quizId: string }> }) => {
     
         try {
             // API call to create the question
-            const response = await request.post('http://localhost:4000/question/create', requestBody);
+            const response = await request.post('/question/create', requestBody);
             console.log("Question created:", response);
             if (!response){
                 return

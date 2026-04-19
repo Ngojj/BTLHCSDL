@@ -8,6 +8,7 @@ import { useSetRecoilState } from "recoil";
 import { userLoginState } from "@/state";
 
 export default function Signup() {
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
@@ -63,8 +64,8 @@ export default function Signup() {
     try {
       const path =
         role === "Student"
-          ? "http://localhost:4000/auth/register-as-student"
-          : "http://localhost:4000/auth/register-as-teacher";
+          ? `${API_BASE_URL}/auth/register-as-student`
+          : `${API_BASE_URL}/auth/register-as-teacher`;
 
       const response = await axios.post(path, {
         firstName,

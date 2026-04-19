@@ -9,6 +9,7 @@ import { useSetRecoilState } from "recoil";
 import { userLoginState } from "@/state";
 
 export default function Login() {
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
   const [showPassword, setShowPassword] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -28,7 +29,7 @@ export default function Login() {
     }
 
     try {
-      const response = await axios.post("http://localhost:4000/auth/login", {
+      const response = await axios.post(`${API_BASE_URL}/auth/login`, {
         username,
         password,
       });

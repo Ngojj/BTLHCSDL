@@ -25,16 +25,32 @@ import lectureRoutes from "./src/lecture/lecture.route";
 import interactRoutes from "./src/interact/interact.route"; 
 import includeCourseRoutes from "./src/includeCourse/includeCourse.route";
 import viewRoadMapRoutes from "./src/viewRoadMap/viewRoadMap.route";
+import paymentRoutes from "./src/payment/payment.route";
 dotenv.config();
 
 const app: Express = express();
 const port = process.env.PORT || 4000;
+const allowedOrigins = (process.env.CORS_ORIGIN || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 if (!process.env.TOKEN_SECRET) {
   throw new Error("Missing TOKEN_SECRET in backend .env");
 }
 
-app.use(cors()); // Enable CORS
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      console.log("Request from origin:", origin);
+      if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+      callback(null, true); // Temporarily allow all for dev
+    },
+  })
+);
 app.use(express.json())
 app.use('/user',userRoutes)
 app.use('/student', studentRoutes)
@@ -57,6 +73,7 @@ app.use('/lecture', lectureRoutes)
 app.use('/interact', interactRoutes)
 app.use('/includeCourse', includeCourseRoutes)
 app.use('/viewRoadMap', viewRoadMapRoutes)
+app.use('/payment', paymentRoutes)
 const server = createServer(app)
 
 
