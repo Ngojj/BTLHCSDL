@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: elearning-backend
+    env: node
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: DATABASE_HOST
+        sync: false
+      - key: DATABASE_PORT
+        sync: false
+      - key: DATABASE_USER
+        sync: false
+      - key: DATABASE_PASSWORD
+        sync: false
+      - key: DATABASE
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: TOKEN_SECRET
+        generateValue: true
+      - key: PAYOS_CLIENT_ID
+        sync: false
+      - key: PAYOS_API_KEY
+        sync: false
+      - key: PAYOS_CHECKSUM_KEY
+        sync: false
+      - key: CORS_ORIGIN
+        value: "*"
