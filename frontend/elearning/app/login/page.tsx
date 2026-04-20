@@ -7,6 +7,7 @@ import axios from "axios";
 import { UserLoginDto } from "../dtos/user.dto";
 import { useSetRecoilState } from "recoil";
 import { userLoginState } from "@/state";
+import { GoogleLogin } from '@react-oauth/google';
 
 export default function Login() {
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
@@ -18,6 +19,54 @@ export default function Login() {
 
   const togglePasswordVisibility = () => {
     setShowPassword((prev) => !prev);
+  };
+
+  const handleLoginSuccess = async (response: any) => {
+    try {
+      const googleToken = response.credential;
+
+      const res = await axios.post(`${API_BASE_URL}/auth/google-login`, {
+        token: googleToken,
+        role: 'student'
+      });
+
+      const serverUser = res.data.user as {
+        id: number | string;
+        role: string;
+        firstName: string;
+        lastName: string;
+        email: string;
+        bankName?: string;
+        bankAccount?: string;
+      } | undefined;
+
+      if (!serverUser || !res.data.token) {
+        throw new Error("Invalid login response");
+      }
+
+      const data: UserLoginDto = {
+        id: String(serverUser.id),
+        role: serverUser.role,
+        firstName: serverUser.firstName,
+        lastName: serverUser.lastName,
+        token: res.data.token,
+        email: serverUser.email,
+        bankName: serverUser.bankName || "",
+        bankAccount: serverUser.bankAccount || "",
+      };
+
+      setUserLogin(data);
+      sessionStorage.setItem("userLogin", JSON.stringify(data));
+
+      if (serverUser.role === "student") {
+        router.push("/");
+      } else {
+        router.push("/teacher");
+      }
+    } catch (error) {
+      console.error("Google login error:", error);
+      alert("Đăng nhập bằng Google thất bại. Vui lòng thử lại.");
+    }
   };
 
   const handleLogin = async (event: React.FormEvent) => {
@@ -173,6 +222,19 @@ export default function Login() {
                 Đăng nhập
               </button>
             </form>
+
+            <div className="relative my-6 flex items-center">
+              <div className="flex-grow border-t border-slate-200" />
+              <span className="mx-4 text-sm text-slate-500">Hoặc</span>
+              <div className="flex-grow border-t border-slate-200" />
+            </div>
+
+            <div className="flex justify-center mb-8">
+              <GoogleLogin 
+                onSuccess={handleLoginSuccess}
+                onError={() => alert("Đăng nhập bằng Google thất bại")}
+              />
+            </div>
 
             <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-center text-sm text-slate-600">
               Chưa có tài khoản?{" "}

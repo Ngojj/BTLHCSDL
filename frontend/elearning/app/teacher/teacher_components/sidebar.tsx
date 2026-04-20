@@ -27,7 +27,7 @@ const Sidebar = (firstName: string, lastName: string) => {
   return (
     <aside className="col-start-1 col-end-3 row-span-11 rounded-[30px] border border-slate-200 bg-white shadow-sm">
       <div className="border-b border-slate-200 p-6 text-center">
-        <Image src={teacherimg} alt="Profile Picture" className="mx-auto h-20 w-20 rounded-full object-cover" />
+        <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(firstName + ' ' + lastName)}&background=random&size=128`} alt="Profile Picture" className="mx-auto h-20 w-20 rounded-full object-cover" />
         <h2 className="mt-4 text-lg font-semibold text-slate-900">{firstName} {lastName}</h2>
         <p className="text-sm text-slate-500">Giảng viên hệ thống e-learning</p>
       </div>

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { UserLoginDto } from "../dtos/user.dto";
 import { useSetRecoilState } from "recoil";
 import { userLoginState } from "@/state";
+import { GoogleLogin } from '@react-oauth/google';
 
 export default function Signup() {
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
@@ -58,6 +59,54 @@ export default function Signup() {
     setUserLogin(data);
     sessionStorage.setItem("userLogin", JSON.stringify(data));
     router.push(redirectPath);
+  };
+
+  const handleGoogleSignup = async (response: any) => {
+    try {
+      const googleToken = response.credential;
+
+      const res = await axios.post(`${API_BASE_URL}/auth/google-login`, {
+        token: googleToken,
+        role: role
+      });
+
+      const serverUser = res.data.user as {
+        id: number | string;
+        role: string;
+        firstName: string;
+        lastName: string;
+        email: string;
+        bankName?: string;
+        bankAccount?: string;
+      } | undefined;
+
+      if (!serverUser || !res.data.token) {
+        throw new Error("Invalid signup response");
+      }
+
+      const data: UserLoginDto = {
+        id: String(serverUser.id),
+        role: serverUser.role,
+        firstName: serverUser.firstName,
+        lastName: serverUser.lastName,
+        token: res.data.token,
+        email: serverUser.email,
+        bankName: serverUser.bankName || "",
+        bankAccount: serverUser.bankAccount || "",
+      };
+
+      setUserLogin(data);
+      sessionStorage.setItem("userLogin", JSON.stringify(data));
+
+      if (serverUser.role === "student") {
+        router.push("/");
+      } else {
+        router.push("/teacher");
+      }
+    } catch (error) {
+      console.error("Google signup error:", error);
+      alert("Đăng ký bằng Google thất bại. Vui lòng thử lại.");
+    }
   };
 
   const handleSignup = async () => {
@@ -138,6 +187,19 @@ export default function Signup() {
               <p className="mt-3 text-sm leading-6 text-slate-500">
                 Điền thông tin bên dưới để bắt đầu sử dụng hệ thống.
               </p>
+            </div>
+
+            <div className="mb-8 flex justify-center">
+              <GoogleLogin 
+                onSuccess={handleGoogleSignup}
+                onError={() => alert("Đăng ký bằng Google thất bại")}
+              />
+            </div>
+
+            <div className="relative my-6 flex items-center">
+              <div className="flex-grow border-t border-slate-200" />
+              <span className="mx-4 text-sm text-slate-500">Hoặc</span>
+              <div className="flex-grow border-t border-slate-200" />
             </div>
 
             <div className="grid gap-5 md:grid-cols-2">

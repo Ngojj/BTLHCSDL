@@ -2,6 +2,7 @@
 import localFont from "next/font/local";
 import "./globals.css";
 import { RecoilRoot } from "recoil";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -20,15 +21,19 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
+
   return (
-    <RecoilRoot>
-      <html lang="en">
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen`}
-        >
-          {children}
-        </body>
-      </html>
-    </RecoilRoot>
+    <GoogleOAuthProvider clientId={googleClientId}>
+      <RecoilRoot>
+        <html lang="en">
+          <body
+            className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen`}
+          >
+            {children}
+          </body>
+        </html>
+      </RecoilRoot>
+    </GoogleOAuthProvider>
   );
 }

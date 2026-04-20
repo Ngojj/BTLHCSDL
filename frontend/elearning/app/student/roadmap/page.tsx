@@ -1,11 +1,9 @@
-import BKNavbar2 from "@/components/BKNavbar2";
-import Footer from "@/components/Footer";
+
 import TableRoadmap from "@/components/TableRoadmap";
 
 const RoadMap = () =>{
     return(
         <>
-            <BKNavbar2 />
             <main className="section-shell py-10 sm:py-14">
                 <section className="mb-8 rounded-[34px] border border-slate-200 bg-white px-6 py-8 shadow-sm sm:px-8">
                     <span className="inline-flex rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-sky-700">
@@ -20,7 +18,6 @@ const RoadMap = () =>{
                 </section>
                 <TableRoadmap/>
             </main>
-            <Footer/>
         </>
     );
 };

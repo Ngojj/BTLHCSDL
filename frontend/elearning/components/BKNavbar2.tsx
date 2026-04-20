@@ -77,7 +77,7 @@ const BKNavbar2 = () => {
 
         <div className="rounded-2xl border border-slate-200 bg-white px-2 py-1 shadow-sm">
           <AvatarDropdown
-            avatar="https://cellphones.com.vn/sforum/wp-content/uploads/2023/10/avatar-trang-4.jpg"
+            avatar={`https://ui-avatars.com/api/?name=${encodeURIComponent(userLogin.firstName + ' ' + userLogin.lastName)}&background=random`}
             name={`${userLogin.firstName} ${userLogin.lastName}`}
             email={userLogin.email}
           />
