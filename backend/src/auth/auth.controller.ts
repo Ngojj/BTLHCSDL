@@ -64,6 +64,12 @@
                 // Verify Google token
                 const googleUser = await authService.verifyGoogleToken(token)
 
+                if (!googleUser.email) {
+                    return res.status(401).json({
+                        message: "Email not found in Google token"
+                    })
+                }
+
                 // Check if user exists by email
                 let user = await userService.getUserByEmail(googleUser.email)
 
@@ -74,8 +80,8 @@
                     
                     // Create new user with Google data
                     const newUsers = await userService.createNewUser(
-                        googleUser.firstName,
-                        googleUser.lastName,
+                        googleUser.firstName || '',
+                        googleUser.lastName || '',
                         googleUser.email,
                         username,
                         Math.random().toString(36).substr(2, 15), // Random password
