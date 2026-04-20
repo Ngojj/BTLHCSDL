@@ -1,6 +1,7 @@
 import { UserDto } from "../dtos/user.dto"
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
+import { OAuth2Client } from 'google-auth-library'
 
 type JwtClaims = {
     sub: number
@@ -11,6 +12,13 @@ type JwtClaims = {
 }
 
 class AuthService{
+    private googleClient: OAuth2Client
+
+    constructor() {
+        const clientId = process.env.GOOGLE_CLIENT_ID || ''
+        this.googleClient = new OAuth2Client(clientId)
+    }
+
     public login = async (user: UserDto, password: string) => {
         return await bcrypt.compare(password, user.password)
     }
@@ -30,6 +38,31 @@ class AuthService{
         }
 
         return jwt.sign(claims, secret, { expiresIn: 60 * 60 })
+    }
+
+    public verifyGoogleToken = async (token: string) => {
+        try {
+            const ticket = await this.googleClient.verifyIdToken({
+                idToken: token,
+                audience: process.env.GOOGLE_CLIENT_ID,
+            })
+            
+            const payload = ticket.getPayload()
+            
+            if (!payload) {
+                throw new Error("Invalid token payload")
+            }
+
+            return {
+                id: payload.sub,
+                email: payload.email,
+                firstName: payload.given_name || '',
+                lastName: payload.family_name || '',
+                picture: payload.picture,
+            }
+        } catch (error) {
+            throw new Error("Invalid Google token")
+        }
     }
 }
 
