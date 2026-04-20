@@ -85,9 +85,12 @@ class StudentController{
                 token: newStudent.token,
                 user: newStudent.user,
             })
-        }catch(e){
-            res.status(500).json({
-                message: e
+        }catch(e:any){
+            console.log(e)
+            const message = e instanceof Error ? e.message : String(e)
+            const status = message.includes("Username") || message.includes("Email") || message.includes("Tên đăng nhập đã tồn tại") || message.includes("Email đã được sử dụng") ? 400 : 500
+            res.status(status).json({
+                message
             })
         }
     }

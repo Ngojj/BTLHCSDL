@@ -16,6 +16,7 @@ const bcrypt = require('bcrypt');
 const saltRounds = 10;
 class UserService {
     constructor() {
+        this.usernameRegex = /^[A-Za-z0-9_]{4,}$/;
         this.getAllUsers = () => __awaiter(this, void 0, void 0, function* () {
             const all = yield db_1.db
                 .select({
@@ -55,7 +56,11 @@ class UserService {
             return data;
         });
         this.createNewUser = (firstName, lastName, email, username, password, role, bankName, bankAccount) => __awaiter(this, void 0, void 0, function* () {
-            const existingByUsername = yield this.getUserByUsername(username);
+            const normalizedUsername = String(username !== null && username !== void 0 ? username : "").trim();
+            if (!this.usernameRegex.test(normalizedUsername)) {
+                throw new Error("Username must be at least 4 characters and contain only letters, numbers, underscores");
+            }
+            const existingByUsername = yield this.getUserByUsername(normalizedUsername);
             if (existingByUsername) {
                 throw new Error("Tên đăng nhập đã tồn tại");
             }
@@ -70,12 +75,12 @@ class UserService {
                     .values({ firstName,
                     lastName,
                     email,
-                    username,
+                    username: normalizedUsername,
                     password: hashedPassword,
                     role,
                     bankAccount,
                     bankName });
-                const createdUser = yield this.getUserByUsername(username);
+                const createdUser = yield this.getUserByUsername(normalizedUsername);
                 return createdUser ? [createdUser] : [];
             }
             catch (error) {

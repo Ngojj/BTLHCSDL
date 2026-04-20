@@ -52,6 +52,11 @@ app.use(
   })
 );
 app.use(express.json())
+
+app.get('/', (req: Request, res: Response) => {
+  res.json({ message: 'Backend API is running' });
+});
+
 app.use('/user',userRoutes)
 app.use('/student', studentRoutes)
 app.use('/teacher', teacherRoutes)

@@ -28,6 +28,7 @@ const lecture_route_1 = __importDefault(require("./src/lecture/lecture.route"));
 const interact_route_1 = __importDefault(require("./src/interact/interact.route"));
 const includeCourse_route_1 = __importDefault(require("./src/includeCourse/includeCourse.route"));
 const viewRoadMap_route_1 = __importDefault(require("./src/viewRoadMap/viewRoadMap.route"));
+const payment_route_1 = __importDefault(require("./src/payment/payment.route"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const port = process.env.PORT || 4000;
@@ -40,14 +41,18 @@ if (!process.env.TOKEN_SECRET) {
 }
 app.use((0, cors_1.default)({
     origin: (origin, callback) => {
+        console.log("Request from origin:", origin);
         if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
             callback(null, true);
             return;
         }
-        callback(new Error("Not allowed by CORS"));
+        callback(null, true); // Temporarily allow all for dev
     },
 }));
 app.use(express_1.default.json());
+app.get('/', (req, res) => {
+    res.json({ message: 'Backend API is running' });
+});
 app.use('/user', user_route_1.default);
 app.use('/student', student_route_1.default);
 app.use('/teacher', teacher_route_1.default);
@@ -69,6 +74,7 @@ app.use('/lecture', lecture_route_1.default);
 app.use('/interact', interact_route_1.default);
 app.use('/includeCourse', includeCourse_route_1.default);
 app.use('/viewRoadMap', viewRoadMap_route_1.default);
+app.use('/payment', payment_route_1.default);
 const server = (0, http_1.createServer)(app);
 server.listen(port, () => {
     console.log(`[server]: Server is running at http://localhost:${port}`);

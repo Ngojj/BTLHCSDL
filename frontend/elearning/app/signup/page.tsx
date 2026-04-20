@@ -61,6 +61,10 @@ export default function Signup() {
   };
 
   const handleSignup = async () => {
+    if (!email || !username || !firstName || !lastName || !bankName || !bankAccountNumber || !password) {
+      alert("Vui lòng điền đầy đủ thông tin.");
+      return;
+    }
     try {
       const path =
         role === "Student"

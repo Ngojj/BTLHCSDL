@@ -52,8 +52,9 @@ class AuthController {
                 });
             }
             catch (e) {
+                const message = e instanceof Error ? e.message : String(e);
                 return res.status(500).json({
-                    message: e
+                    message
                 });
             }
         });
