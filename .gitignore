@@ -11,3 +11,9 @@ yarn-error.log
 !README.md
 !Readme.md
 !readme.md
+
+# Ignore Docker Compose files
+docker-compose*.yml
+docker-compose*.yaml
+compose*.yml
+compose*.yaml
