@@ -6,6 +6,8 @@ build/
 npm-debug.log
 yarn-error.log
 
-# Ignore all .md files except README.md
+# Ignore Markdown files, but keep README files
 *.md
 !README.md
+!Readme.md
+!readme.md
