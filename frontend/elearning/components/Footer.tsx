@@ -1,36 +1,64 @@
+import Link from "next/link";
+import { BrandLogo } from "./BrandMark";
+
+const columns = [
+  {
+    title: "Học tập",
+    links: [
+      { label: "Khóa học", href: "/#khoa-hoc" },
+      { label: "Lộ trình", href: "/student/roadmap" },
+      { label: "Bảng điểm", href: "/student/tablescore" },
+    ],
+  },
+  {
+    title: "Giảng viên",
+    links: [
+      { label: "Dashboard", href: "/teacher" },
+      { label: "Tạo khóa học", href: "/teacher/create" },
+      { label: "Doanh thu", href: "/teacher/revenue" },
+    ],
+  },
+];
+
 const Footer = () => {
   return (
-    <footer className="mt-20 border-t border-slate-200 bg-white/90">
-      <div className="section-shell py-12">
-        <div className="grid gap-10 lg:grid-cols-[1.2fr_0.8fr]">
-          <div className="space-y-4">
-            <span className="inline-flex rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-sky-700">
-              CO2014 Database System
-            </span>
-            <h2 className="max-w-2xl text-2xl font-semibold tracking-tight text-slate-900">
-              Giao diện học tập rõ ràng, gọn gàng và phù hợp với một hệ thống e-learning dùng hằng ngày.
-            </h2>
-            <p className="max-w-2xl text-sm leading-7 text-slate-600">
-              Hệ thống ưu tiên tính dễ dùng trong điều hướng, quản lý khóa học, bài giảng, quiz và lộ trình học
-              để người học lẫn giảng viên đều thao tác thuận tiện hơn.
-            </p>
+    <footer className="mt-24 border-t border-bk-line bg-white">
+      <div className="section-shell grid gap-10 py-12 md:grid-cols-[1.6fr_1fr_1fr_1fr]">
+        <div>
+          <div className="flex items-center gap-2.5">
+            <BrandLogo className="h-7 w-7" />
+            <span className="font-display text-[15px] font-semibold text-bk-ink">Bách Khoa E-Learning</span>
           </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Định hướng</p>
-              <p className="mt-2 text-sm leading-6 text-slate-700">
-                Thiết kế tối giản, dễ đọc, nhấn mạnh vào dữ liệu học tập thay vì hiệu ứng.
-              </p>
-            </div>
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Mục tiêu</p>
-              <p className="mt-2 text-sm leading-6 text-slate-700">
-                Tạo trải nghiệm đủ chuyên nghiệp để có thể dùng như một cổng học tập thực tế.
-              </p>
-            </div>
-          </div>
+          <p className="mt-4 max-w-xs text-sm leading-6 text-bk-slate">
+            Trường Đại học Bách Khoa — ĐHQG TP.HCM. Bài tập lớn môn Hệ cơ sở dữ liệu.
+          </p>
         </div>
+
+        {columns.map((column) => (
+          <div key={column.title}>
+            <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-bk-slate">{column.title}</p>
+            <ul className="mt-4 space-y-2.5">
+              {column.links.map((link) => (
+                <li key={link.label}>
+                  <Link href={link.href} className="text-sm text-bk-blue transition-colors hover:text-bk-navy">
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+
+        <div>
+          <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-bk-slate">Liên hệ</p>
+          <p className="mt-4 text-sm leading-6 text-bk-ink">268 Lý Thường Kiệt, Q.10, TP.HCM</p>
+          <p className="mt-1 font-mono text-xs text-bk-slate">elearning@hcmut.edu.vn</p>
+        </div>
+      </div>
+
+      <div className="section-shell flex items-center justify-between border-t border-bk-line py-5 font-mono text-[10px] uppercase tracking-[0.16em] text-bk-slate">
+        <span>© 2026 HCMUT · CO2013</span>
+        <span>BK-ELN · REV. 02</span>
       </div>
     </footer>
   );

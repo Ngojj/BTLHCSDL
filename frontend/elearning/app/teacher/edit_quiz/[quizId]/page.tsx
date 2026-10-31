@@ -1,7 +1,5 @@
 'use client';
 import { useEffect, useState } from "react";
-import Header from "../../teacher_components/header"
-import Sidebar from "../../teacher_components/sidebar"
 import { userLoginState } from "@/state";
 import { useRecoilState } from "recoil";
 import * as request from '@/app/axios/axios'
@@ -198,9 +196,7 @@ const EditQuizPage = ({ params }: { params: Promise<{ quizId: string }> }) => {
     
     return (
         <div className="grid grid-rows-12 grid-cols-12 gap-4 bg-grayBG">
-            {Header(userLogin.lastName + ' ' + userLogin.firstName)}
-            {Sidebar(userLogin.firstName, userLogin.lastName)}
-            <div className="bg-pink-600 col-start-3 col-span-10 row-span-1 rounded-xl text-3xl text-white font-semibold uppercase items-center p-5 flex flex-col justify-center">
+            <div className="bg-pink-600 col-span-12 row-span-1 rounded-xl text-3xl text-white font-semibold uppercase items-center p-5 flex flex-col justify-center">
                 <h1 className="self-center">quiz title: {quiz.name}</h1>
                 <button
                     className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600"
@@ -210,7 +206,7 @@ const EditQuizPage = ({ params }: { params: Promise<{ quizId: string }> }) => {
                 </button>
             </div>
             {/* Questions Container */}
-            <div className="space-y-6 bg-white col-start-3 col-span-10 row-span-9 mb-4 rounded-xl">
+            <div className="space-y-6 bg-white col-span-12 row-span-9 mb-4 rounded-xl">
                 {sampleQuestions.map((question, index) => (
                     <div
                         key={index}

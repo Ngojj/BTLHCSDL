@@ -1,6 +1,9 @@
 'use client';
 
-import Image from "next/image";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
+import AuthPanel from "@/components/AuthPanel";
+import BrandMark from "@/components/BrandMark";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
@@ -9,11 +12,17 @@ import { useSetRecoilState } from "recoil";
 import { userLoginState } from "@/state";
 import { GoogleLogin } from '@react-oauth/google';
 
+const roles = [
+  { value: "student", label: "Sinh viên" },
+  { value: "teacher", label: "Giảng viên" },
+];
+
 export default function Login() {
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
   const [showPassword, setShowPassword] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState("student");
   const setUserLogin = useSetRecoilState(userLoginState);
   const router = useRouter();
 
@@ -27,7 +36,7 @@ export default function Login() {
 
       const res = await axios.post(`${API_BASE_URL}/auth/google-login`, {
         token: googleToken,
-        role: 'student'
+        role
       });
 
       const serverUser = res.data.user as {
@@ -129,126 +138,116 @@ export default function Login() {
   };
 
   return (
-    <main className="section-shell py-10 sm:py-14">
-      <div className="grid min-h-[78vh] overflow-hidden rounded-[36px] border border-slate-200 bg-white shadow-sm lg:grid-cols-[1.05fr_0.95fr]">
-        <section className="relative hidden overflow-hidden bg-slate-900 px-10 py-12 text-white lg:block">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.18),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(255,255,255,0.08),transparent_22%)]" />
-          <div className="relative flex h-full flex-col justify-between">
-            <div>
-              <span className="inline-flex rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-slate-100">
-                Student & Teacher Portal
-              </span>
-              <h1 className="mt-6 max-w-xl text-4xl font-semibold leading-tight">
-                Đăng nhập vào không gian học tập được thiết kế rõ ràng và hiện đại hơn.
-              </h1>
-              <p className="mt-5 max-w-lg text-sm leading-7 text-slate-300">
-                Theo dõi khóa học, lộ trình, quiz và dữ liệu học tập trong một hệ thống thống nhất cho cả người học lẫn giảng viên.
-              </p>
-            </div>
+    <main className="grid min-h-screen lg:grid-cols-2">
+      <AuthPanel
+        eyebrow="Chào mừng trở lại"
+        title={<>Tiếp tục bài học <span className="text-[#8FC6F0]">còn dang dở.</span></>}
+        points={[
+          "Theo dõi tiến độ từng khóa và từng section",
+          "Bảng điểm quiz cập nhật ngay sau khi nộp",
+          "Nhận chứng chỉ khi hoàn thành lộ trình",
+        ]}
+      />
 
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300">Điểm nổi bật</p>
-              <ul className="mt-3 space-y-3 text-sm text-slate-100">
-                <li>Dashboard trực quan cho cả sinh viên và giảng viên.</li>
-                <li>Quản lý khóa học, tiến độ và doanh thu trên cùng một hệ thống.</li>
-                <li>Thiết kế ưu tiên trải nghiệm thực tế thay vì chỉ trình diễn.</li>
-              </ul>
-            </div>
-          </div>
-        </section>
+      <section className="flex items-center justify-center px-6 py-12 sm:px-10">
+        <div className="w-full max-w-md">
+          <Link href="/" className="mb-10 inline-block lg:hidden" aria-label="Trang chủ">
+            <BrandMark />
+          </Link>
 
-        <section className="flex items-center justify-center px-6 py-10 sm:px-10">
-          <div className="w-full max-w-md">
-            <div className="mb-8 text-center">
-              <Image
-                className="mx-auto h-16 w-16 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm"
-                src="https://lms.hcmut.edu.vn/pluginfile.php/3/theme_academi/logo/1725955904/logoBK.png"
-                alt="Bách Khoa"
-                width={96}
-                height={96}
-              />
-              <h2 className="mt-6 text-3xl font-semibold tracking-tight text-slate-900">
-                Đăng nhập tài khoản
-              </h2>
-              <p className="mt-3 text-sm leading-6 text-slate-500">
-                Truy cập nhanh vào hệ thống học tập và quản lý của bạn.
-              </p>
-            </div>
-
-            <form className="space-y-5" onSubmit={handleLogin}>
-              <div>
-                <label htmlFor="username" className="mb-2 block text-sm font-medium text-slate-700">
-                  Tài khoản
-                </label>
-                <input
-                  id="username"
-                  name="username"
-                  type="text"
-                  autoComplete="username"
-                  required
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-sky-300 focus:bg-white focus:ring-4 focus:ring-sky-100"
-                  placeholder="Nhập tên đăng nhập"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="password" className="mb-2 block text-sm font-medium text-slate-700">
-                  Mật khẩu
-                </label>
-                <div className="relative">
-                  <input
-                    id="password"
-                    name="password"
-                    type={showPassword ? "text" : "password"}
-                    autoComplete="current-password"
-                    required
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 pr-12 text-slate-900 outline-none transition focus:border-sky-300 focus:bg-white focus:ring-4 focus:ring-sky-100"
-                    placeholder="Nhập mật khẩu"
-                  />
-                  <button
-                    type="button"
-                    onClick={togglePasswordVisibility}
-                    className="absolute inset-y-0 right-0 flex items-center px-4 text-slate-400"
-                    aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-                  >
-                    {showPassword ? "Ẩn" : "Hiện"}
-                  </button>
-                </div>
-              </div>
-
-              <button type="submit" className="button-primary w-full">
-                Đăng nhập
+          <div className="grid grid-cols-2 gap-1 rounded-lg border border-bk-line bg-bk-mist p-1" role="tablist">
+            {roles.map((item) => (
+              <button
+                key={item.value}
+                type="button"
+                role="tab"
+                aria-selected={role === item.value}
+                onClick={() => setRole(item.value)}
+                className={`rounded-md py-2 text-sm transition-colors ${
+                  role === item.value
+                    ? "border border-bk-line bg-white font-semibold text-bk-navy"
+                    : "border border-transparent text-bk-slate hover:text-bk-ink"
+                }`}
+              >
+                {item.label}
               </button>
-            </form>
+            ))}
+          </div>
 
-            <div className="relative my-6 flex items-center">
-              <div className="flex-grow border-t border-slate-200" />
-              <span className="mx-4 text-sm text-slate-500">Hoặc</span>
-              <div className="flex-grow border-t border-slate-200" />
-            </div>
+          <p className="eyebrow mt-8">Đăng nhập · {roles.find((r) => r.value === role)?.label}</p>
+          <h1 className="mt-2 text-4xl font-semibold tracking-tight text-bk-ink">Vào tài khoản</h1>
+          <p className="mt-2 text-sm text-bk-slate">
+            Chưa có tài khoản?{" "}
+            <Link href="/signup" className="font-semibold text-bk-blue hover:text-bk-navy">
+              Đăng ký
+            </Link>
+          </p>
 
-            <div className="flex justify-center mb-8">
-              <GoogleLogin 
-                onSuccess={handleLoginSuccess}
-                onError={() => alert("Đăng nhập bằng Google thất bại")}
+          <form className="mt-8 space-y-3" onSubmit={handleLogin}>
+            <label className="block rounded-md border border-bk-line px-3.5 pb-2 pt-2.5 transition focus-within:border-bk-blue focus-within:ring-2 focus-within:ring-bk-blue/15">
+              <span className="block text-xs text-bk-slate">Tên đăng nhập</span>
+              <input
+                id="username"
+                name="username"
+                type="text"
+                autoComplete="username"
+                required
+                onChange={(e) => setUsername(e.target.value)}
+                className="mt-0.5 block w-full bg-transparent text-sm text-bk-ink outline-none placeholder:text-bk-slate/60"
+                placeholder="Nhập tên đăng nhập"
               />
-            </div>
+            </label>
 
-            <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-center text-sm text-slate-600">
-              Chưa có tài khoản?{" "}
+            <label className="flex items-end gap-3 rounded-md border border-bk-line px-3.5 pb-2 pt-2.5 transition focus-within:border-bk-blue focus-within:ring-2 focus-within:ring-bk-blue/15">
+              <span className="min-w-0 flex-1">
+                <span className="block text-xs text-bk-slate">Mật khẩu</span>
+                <input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  required
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="mt-0.5 block w-full bg-transparent text-sm text-bk-ink outline-none placeholder:text-bk-slate/60"
+                  placeholder="Nhập mật khẩu"
+                />
+              </span>
               <button
                 type="button"
-                className="font-semibold text-sky-700 transition hover:text-sky-800"
-                onClick={() => router.push("/signup")}
+                onClick={togglePasswordVisibility}
+                className="pb-0.5 text-xs text-bk-slate hover:text-bk-navy"
+                aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
               >
-                Đăng ký ngay
+                {showPassword ? "Ẩn" : "Hiện"}
               </button>
-            </div>
+            </label>
+
+            <button type="submit" className="button-primary !mt-6 w-full py-3">
+              Đăng nhập <ArrowRight className="h-4 w-4" />
+            </button>
+          </form>
+
+          <div className="my-6 flex items-center gap-4">
+            <span className="h-px flex-1 bg-bk-line" />
+            <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-bk-slate">Hoặc</span>
+            <span className="h-px flex-1 bg-bk-line" />
           </div>
-        </section>
-      </div>
+
+          <div className="flex justify-center">
+            <GoogleLogin
+              onSuccess={handleLoginSuccess}
+              onError={() => alert("Đăng nhập bằng Google thất bại")}
+              width="400"
+              text="continue_with"
+            />
+          </div>
+
+          <p className="mt-8 text-xs leading-5 text-bk-slate">
+            Đăng nhập bằng Google sẽ tạo tài khoản {role === "teacher" ? "giảng viên" : "sinh viên"} nếu email chưa
+            được đăng ký.
+          </p>
+        </div>
+      </section>
     </main>
   );
 }

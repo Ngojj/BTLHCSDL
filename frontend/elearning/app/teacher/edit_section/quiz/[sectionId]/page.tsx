@@ -4,8 +4,6 @@ import { Button } from '@/components/ui/button';
 import { useRecoilState } from "recoil";
 import { userLoginState } from "@/state";
 import * as request from '@/app/axios/axios';
-import Header from "../../../teacher_components/header";
-import Sidebar from "../../../teacher_components/sidebar";
 import { useRouter } from "next/navigation";
 
 const QuizSection = ({ params }: { params: Promise<{ sectionId: string }> }) => {
@@ -126,8 +124,6 @@ const QuizSection = ({ params }: { params: Promise<{ sectionId: string }> }) => 
     return (
       <div className="section-shell py-8">
         <div className="grid min-h-screen grid-cols-12 gap-6">
-          <div className="col-span-12">{Header(userLogin.lastName + ' ' + userLogin.firstName)}</div>
-          {Sidebar(userLogin.firstName, userLogin.lastName)}
         </div>
       </div>
     )
@@ -136,12 +132,8 @@ const QuizSection = ({ params }: { params: Promise<{ sectionId: string }> }) => 
   return (
     <main className="section-shell py-8">
       <div className="grid min-h-screen grid-cols-12 gap-6">
-        <div className="col-span-12">
-          {Header(userLogin.lastName + ' ' + userLogin.firstName)}
-        </div>
-        {Sidebar(userLogin.firstName, userLogin.lastName)}
 
-        <section className="col-span-10 rounded-[30px] border border-slate-200 bg-white shadow-sm">
+        <section className="col-span-12 rounded-[30px] border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-slate-200 px-8 py-7">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div>

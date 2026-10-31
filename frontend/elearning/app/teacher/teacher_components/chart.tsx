@@ -118,7 +118,7 @@ const RevenueChart = () => {
 
     if (courses.length === 0) {
         return (
-            <div className="bg-white rounded-lg p-6 h-max text-center text-slate-500">
+            <div className="p-6 text-center text-sm text-bk-slate">
                 Chưa có dữ liệu doanh thu để hiển thị.
             </div>
         );
@@ -144,16 +144,11 @@ const RevenueChart = () => {
     },
     {}
     );
-    const getRandomCyanToLightBlueShade = () => {
-        const red = Math.floor(Math.random() * 100); // Red value (0 to 99)
-        const green = Math.floor(Math.random() * 56) + 200; // Green value (200 to 255)
-        const blue = Math.floor(Math.random() * 56) + 200; // Blue value (200 to 255)
-        return `rgb(${red}, ${green}, ${blue})`;
-    };
-    const datasets = Object.keys(groupedByCourse).map((courseId) => ({
+    const palette = ["#1488DB", "#9CCBEF", "#5B6B8C", "#C9A227", "#4C7BEA", "#B8C4DA"];
+    const datasets = Object.keys(groupedByCourse).map((courseId, index) => ({
         label: `${courses.find((c) => c.courseId === Number(courseId))?.courseName}`,
         data: groupedByCourse[Number(courseId)].revenues,
-        borderColor: getRandomCyanToLightBlueShade(),
+        borderColor: palette[index % palette.length],
         borderWidth: 2,
         tension: 0.4,
         borderDash: [] as number[], // Add borderDash property
@@ -205,14 +200,14 @@ const RevenueChart = () => {
     datasets.push({
         label: "Tổng doanh thu ngày",
         data: totalRevenueByDay,
-        borderColor: "green", // Distinct color for total revenue
+        borderColor: "#032B91", // Distinct color for total revenue
         borderWidth: 3,
         tension: 0.1,
         borderDash: [10, 5], // Dashed line for total revenue
     });
     return (
-        <div className="bg-white rounded-lg p-6 h-max">
-            <h2 className="text-2xl font-bold mb-20 text-center">Doanh thu theo ngày</h2>
+        <div className="p-2">
+            <h2 className="mb-6 text-base font-semibold text-bk-ink">Doanh thu theo ngày</h2>
             <Line data={dataConfig} options={options} />
         </div>
     );

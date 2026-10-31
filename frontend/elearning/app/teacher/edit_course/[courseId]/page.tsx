@@ -1,7 +1,5 @@
 'use client';
 import { useEffect, useState } from "react";
-import Header from "../../teacher_components/header"
-import Sidebar from "../../teacher_components/sidebar"
 import { Button } from '@/components/ui/button';
 import { userLoginState } from "@/state";
 import { useRecoilState } from "recoil";
@@ -228,10 +226,6 @@ const EditCoursePage = ({ params }: { params: Promise<{ courseId: string }> }) =
         <main className="section-shell py-8">
             {loading && <LoadingOverlay />}
             <div className="grid min-h-screen grid-cols-12 gap-6">
-                <div className="col-span-12">
-                    {Header(userLogin.lastName + ' ' + userLogin.firstName)}
-                </div>
-                {Sidebar(userLogin.firstName, userLogin.lastName)}
 
                 {isEditing && editingSection && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4 backdrop-blur-sm">
@@ -299,7 +293,7 @@ const EditCoursePage = ({ params }: { params: Promise<{ courseId: string }> }) =
                     </div>
                 )}
 
-                <section className="col-span-10 rounded-[30px] border border-slate-200 bg-white shadow-sm">
+                <section className="col-span-12 rounded-[30px] border border-slate-200 bg-white shadow-sm">
                     <div className="border-b border-slate-200 px-8 py-7">
                         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                             <div>

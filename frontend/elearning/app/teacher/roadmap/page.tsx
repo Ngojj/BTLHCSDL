@@ -1,7 +1,5 @@
 'use client';
 import { useEffect, useState } from "react";
-import Header from "../teacher_components/header";
-import Sidebar from "../teacher_components/sidebar";
 import { useRecoilState } from "recoil";
 import { userLoginState } from "@/state";
 import * as request from '@/app/axios/axios';
@@ -88,13 +86,8 @@ const RoadMapPage = () => {
   return (
     <main className="section-shell py-8">
       <div className="grid min-h-screen grid-cols-12 gap-6">
-        <div className="col-span-12">
-          {Header(userLogin.lastName + ' ' + userLogin.firstName)}
-        </div>
 
-        {Sidebar(userLogin.firstName, userLogin.lastName)}
-
-        <section className="col-span-10 rounded-[30px] border border-slate-200 bg-white p-8 shadow-sm">
+        <section className="col-span-12 rounded-[30px] border border-slate-200 bg-white p-8 shadow-sm">
           <div className="max-w-3xl">
             <span className="inline-flex rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-sky-700">
               Teacher Planner

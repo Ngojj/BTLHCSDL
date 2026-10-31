@@ -26,51 +26,39 @@ const FillInTheBlank: React.FC<QuizProps> = ({
   }
 
   return (
-    <div className="w-full flex items-center justify-center">
-      <div className="bg-white w-full max-w-3xl p-6 rounded-lg shadow-lg">
-        <div className="flex justify-between items-center mb-6">
-          <div className="px-4 py-2 border rounded-lg border-red-500 text-red-500">
-            Câu trả lời:{" "}
-            <span className="font-semibold">{selectedAnswer || "Chưa nhập"}</span>
-          </div>
-          {/* <div className="px-4 py-2 border rounded-lg border-red-500 text-red-500">
-            Thời gian còn lại: {timeLeft}
-          </div> */}
-          
-        </div>
-        <p className="text-sm text-gray-300"><i>Vui lòng nhấn "Khóa" khi thực hiện xong câu hỏi, nếu không kết quả sẽ không được lưu</i></p>
-        <div className="bg-gray-100 p-4 rounded-lg text-gray-700 mb-6">
-          <p className="text-lg font-medium">{question}</p>
-        </div>
+    <div>
+      <h2 className="text-balance text-3xl font-semibold leading-tight tracking-tight text-bk-ink sm:text-[34px]">
+        {question}
+      </h2>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Nhập câu trả lời:
-          </label>
-          <div className="flex justify-center items-center">
-            <input
-              type="text"
-              disabled={state}
-              onChange={(e) => setUserAnswer(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder={state? "Không thể nhập câu trả lời khi đã khóa!" : "Nhập câu trả lời của bạn"}
-            />
-            <button
-              type="button"
-              className={`py-2 border-2 ${state ? "border-red-500 text-red-500" : "border-blue-500 text-blue-500"} hover:scale-110 active scale-90 w-32 rounded-xl`}
-              onClick={() => {
-                if (state) {
-                  handleBlockedButton();
-                  return;
-                }
-                handleUnblockedButtion();
-              }}>
-                {state ? "Mở khóa" : "Khóa"}
-            </button>
-          </div>
-        
-        </div>
+      <label className="mt-8 block text-xs text-bk-slate" htmlFor={`answer-${id}`}>
+        Câu trả lời của bạn
+      </label>
+      <div className="mt-2 flex gap-2">
+        <input
+          id={`answer-${id}`}
+          type="text"
+          disabled={state}
+          onChange={(e) => setUserAnswer(e.target.value)}
+          className="input-field disabled:bg-bk-mist disabled:text-bk-slate"
+          placeholder={state ? "Đã khóa câu trả lời" : "Nhập câu trả lời rồi nhấn Khóa"}
+        />
+        <button
+          type="button"
+          className={state ? "button-secondary w-32" : "button-primary w-32"}
+          onClick={() => {
+            if (state) {
+              handleBlockedButton();
+              return;
+            }
+            handleUnblockedButtion();
+          }}>
+            {state ? "Mở khóa" : "Khóa"}
+        </button>
       </div>
+      <p className="mt-3 text-xs text-bk-slate">
+        Đã lưu: <span className="font-mono text-bk-ink">{selectedAnswer || "—"}</span> · Nhấn “Khóa” để lưu câu trả lời.
+      </p>
     </div>
   );
 };

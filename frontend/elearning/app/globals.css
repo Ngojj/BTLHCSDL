@@ -4,31 +4,41 @@
 
 @layer base {
   :root {
-    --background: 204 43% 98%;
-    --foreground: 213 38% 15%;
+    /* Xanh Bách Khoa */
+    --bk-navy: #032b91;
+    --bk-blue: #1488db;
+    --bk-ink: #0b1b3f;
+    --bk-slate: #5b6b8c;
+    --bk-line: #dce3f0;
+    --bk-mist: #f4f7fc;
+    --bk-gold: #c9a227;
+    --bk-night: #0b1a3d;
+
+    --background: 0 0% 100%;
+    --foreground: 222 70% 15%;
     --card: 0 0% 100%;
-    --card-foreground: 213 38% 15%;
+    --card-foreground: 222 70% 15%;
     --popover: 0 0% 100%;
-    --popover-foreground: 213 38% 15%;
-    --primary: 211 85% 34%;
+    --popover-foreground: 222 70% 15%;
+    --primary: 224 96% 29%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 204 48% 94%;
-    --secondary-foreground: 213 38% 18%;
-    --muted: 204 31% 92%;
-    --muted-foreground: 215 16% 39%;
-    --accent: 211 35% 92%;
-    --accent-foreground: 213 38% 15%;
-    --destructive: 0 74% 52%;
+    --secondary: 218 60% 97%;
+    --secondary-foreground: 222 70% 15%;
+    --muted: 218 60% 97%;
+    --muted-foreground: 221 21% 45%;
+    --accent: 218 60% 97%;
+    --accent-foreground: 222 70% 15%;
+    --destructive: 21 90% 40%;
     --destructive-foreground: 0 0% 100%;
-    --border: 205 27% 86%;
-    --input: 205 27% 86%;
-    --ring: 211 85% 34%;
-    --chart-1: 211 85% 34%;
-    --chart-2: 211 60% 45%;
-    --chart-3: 213 30% 55%;
-    --chart-4: 215 20% 65%;
-    --chart-5: 217 18% 75%;
-    --radius: 1.25rem;
+    --border: 219 41% 90%;
+    --input: 219 41% 90%;
+    --ring: 205 83% 47%;
+    --chart-1: 224 96% 29%;
+    --chart-2: 205 83% 47%;
+    --chart-3: 205 75% 70%;
+    --chart-4: 210 70% 85%;
+    --chart-5: 46 68% 47%;
+    --radius: 0.625rem;
   }
 
   * {
@@ -40,17 +50,21 @@
   }
 
   body {
-    @apply bg-background text-foreground antialiased;
-    font-family: var(--font-geist-sans), "Segoe UI", sans-serif;
-    background-image:
-      radial-gradient(circle at top left, rgba(14, 116, 210, 0.08), transparent 24%),
-      radial-gradient(circle at bottom right, rgba(15, 23, 42, 0.04), transparent 20%),
-      linear-gradient(180deg, #f8fbff 0%, #f3f6fa 42%, #f8fbff 100%);
+    @apply bg-white font-sans text-bk-ink antialiased;
     min-height: 100vh;
   }
 
+  h1, h2, h3, h4 {
+    @apply font-display;
+  }
+
   ::selection {
-    background: rgba(14, 116, 210, 0.18);
+    background: rgba(20, 136, 219, 0.18);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--bk-blue);
+    outline-offset: 2px;
   }
 }
 
@@ -59,36 +73,44 @@
     text-wrap: balance;
   }
 
-  .glass-panel {
-    background: rgba(255, 255, 255, 0.88);
-    backdrop-filter: blur(10px);
-  }
-
   .section-shell {
-    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+    @apply mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8;
   }
 
-  .hero-grid {
+  /* Lưới bản vẽ kỹ thuật */
+  .bp-grid {
     background-image:
-      linear-gradient(rgba(14, 116, 210, 0.05) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(14, 116, 210, 0.05) 1px, transparent 1px);
+      linear-gradient(rgba(3, 43, 145, 0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(3, 43, 145, 0.06) 1px, transparent 1px);
     background-size: 32px 32px;
   }
-}
 
-@keyframes float-gentle {
-  0%, 100% {
-    transform: translateY(0px);
+  .bp-grid-dark {
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+    background-size: 32px 32px;
   }
-  50% {
-    transform: translateY(-10px);
+
+  /* Giữ tên cũ cho các trang chưa đổi */
+  .hero-grid {
+    @apply bp-grid;
+  }
+
+  .glass-panel {
+    @apply bg-white;
+  }
+
+  /* Góc khuyết trên phải */
+  .cut-corner {
+    clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 0 100%);
   }
 }
 
 @keyframes fade-slide-up {
   from {
     opacity: 0;
-    transform: translateY(22px);
+    transform: translateY(16px);
   }
   to {
     opacity: 1;
@@ -96,24 +118,57 @@
   }
 }
 
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
 @layer components {
-  .animate-float-gentle {
-    animation: float-gentle 5s ease-in-out infinite;
+  .animate-fade-slide-up {
+    animation: fade-slide-up 0.6s ease-out both;
   }
 
-  .animate-fade-slide-up {
-    animation: fade-slide-up 0.7s ease-out both;
+  .animate-float-gentle {
+    animation: none;
+  }
+
+  .animate-marquee {
+    animation: marquee 40s linear infinite;
+  }
+
+  .eyebrow {
+    @apply font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-bk-blue;
+  }
+
+  .card {
+    @apply rounded-[10px] border border-bk-line bg-white;
   }
 
   .button-primary {
-    @apply inline-flex items-center justify-center rounded-xl bg-sky-800 px-5 py-3 text-sm font-semibold text-white shadow-sm transition duration-300 hover:bg-sky-900 hover:shadow-md;
+    @apply inline-flex items-center justify-center gap-2 rounded-md bg-bk-navy px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-bk-blue disabled:cursor-not-allowed disabled:bg-bk-navy/40;
   }
 
   .button-secondary {
-    @apply inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition duration-300 hover:border-slate-300 hover:bg-slate-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-md border border-bk-line bg-white px-5 py-2.5 text-sm font-semibold text-bk-ink transition-colors hover:border-bk-navy hover:text-bk-navy disabled:cursor-not-allowed disabled:text-bk-slate/50 disabled:hover:border-bk-line;
+  }
+
+  .button-link {
+    @apply inline-flex items-center gap-1.5 text-sm font-semibold text-bk-blue transition-colors hover:text-bk-navy;
+  }
+
+  .input-field {
+    @apply block w-full rounded-md border border-bk-line bg-white px-3.5 py-3 text-sm text-bk-ink outline-none transition placeholder:text-bk-slate/70 focus:border-bk-blue focus:ring-2 focus:ring-bk-blue/15;
   }
 
   .section-title {
-    @apply text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl;
+    @apply font-display text-3xl font-semibold tracking-tight text-bk-ink sm:text-4xl;
+  }
+
+  .badge {
+    @apply inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 font-mono text-[11px] font-medium;
   }
 }

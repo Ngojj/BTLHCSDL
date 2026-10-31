@@ -12,7 +12,7 @@ export default function StudentLayout({
   return (
     <>
       <BKNavbar2 />
-      <div className="flex-grow bg-slate-50 min-h-screen">
+      <div className="min-h-screen flex-grow bg-white">
         {children}
       </div>
       <Footer />

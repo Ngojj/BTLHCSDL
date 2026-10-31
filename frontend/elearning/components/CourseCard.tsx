@@ -6,12 +6,56 @@ import React, { useState } from 'react';
 import { useRecoilValue } from 'recoil';
 import * as request from "@/app/axios/axios";
 import ReactDOM from 'react-dom';
+import { ArrowRight, X } from 'lucide-react';
+
+const glyphs: [string, string][] = [
+  ['cơ sở dữ liệu', 'SQL'],
+  ['database', 'SQL'],
+  ['giải thuật', 'O(n log n)'],
+  ['machine learning', 'ŷ = σ(wx)'],
+  ['học máy', 'ŷ = σ(wx)'],
+  ['mạng', 'TCP/IP'],
+  ['hệ điều hành', '$ sudo'],
+  ['kiến trúc', '0x1F'],
+];
+
+export const courseGlyph = (name: string) => {
+  const lower = String(name || '').toLowerCase();
+  const match = glyphs.find(([keyword]) => lower.includes(keyword));
+  if (match) return match[1];
+  return String(name || 'BK')
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 3)
+    .map((word) => word[0])
+    .join('')
+    .toUpperCase();
+};
+
+export const formatVnd = (value: number | string) => {
+  const amount = Number(value);
+  if (Number.isNaN(amount)) return `${value} ₫`;
+  return `${amount.toLocaleString('vi-VN')} ₫`;
+};
+
+const languageCode = (language?: string) => {
+  const lower = String(language || '').toLowerCase();
+  if (!lower) return 'VI';
+  if (lower.startsWith('en') || lower.includes('anh')) return 'EN';
+  if (lower.startsWith('vi') || lower.includes('việt')) return 'VI';
+  return lower.slice(0, 2).toUpperCase();
+};
 
 function CourseCard(props: any) {
   const [modal, setModal] = useState(false);
   const [paymentModal, setPaymentModal] = useState(false);
   const [section, setSection] = useState<SectionDto[]>([]);
   const user = useRecoilValue(userLoginState);
+
+  const featured = Boolean(props.featured);
+  const year = props.creationTime ? new Date(props.creationTime).getFullYear() : null;
+  const meta = [`#${String(props.id).padStart(4, '0')}`, languageCode(props.language), year].filter(Boolean).join(' · ');
+  const avgQuiz = Number(props.avgQuiz || 0);
 
   const toggleModal = async () => {
     try {
@@ -37,7 +81,7 @@ function CourseCard(props: any) {
         price: props.price,
         courseName: props.courseName
       });
-      
+
       if (response.checkoutUrl) {
         window.location.href = response.checkoutUrl;
       } else {
@@ -54,130 +98,118 @@ function CourseCard(props: any) {
 
   return (
     <>
-      <div
-        className="group relative flex min-h-[380px] w-full cursor-pointer flex-col overflow-hidden rounded-[26px] border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl"
+      <article
+        role="button"
+        tabIndex={0}
+        className={`group flex h-full w-full cursor-pointer flex-col overflow-hidden rounded-[10px] border bg-white text-left transition duration-200 hover:-translate-y-0.5 ${
+          featured ? 'border-bk-navy' : 'border-bk-line hover:border-bk-navy'
+        }`}
         onClick={toggleModal}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') toggleModal();
+        }}
       >
-        <div className="relative h-48 overflow-hidden">
-          <img
-            className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
-            src={
-              props.image ||
-              'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80'
-            }
-            alt="Course preview"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/65 via-slate-900/15 to-transparent" />
-          <div className="absolute inset-x-4 top-4 flex items-center justify-between">
-            <span className="rounded-full bg-white/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-800">
-              Khóa học
+        <div
+          className={`relative flex flex-col justify-between overflow-hidden px-5 pb-4 pt-4 ${
+            featured ? 'bp-grid-dark h-52 bg-bk-navy text-white' : 'bp-grid h-32 border-b border-bk-line bg-bk-mist text-bk-navy'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className={`font-mono text-[10px] uppercase tracking-[0.14em] ${featured ? 'text-white/70' : 'text-bk-slate'}`}>
+              {meta}
             </span>
-            <span className="rounded-full bg-sky-900 px-3 py-1 text-xs font-semibold text-white shadow-sm">
-              {props.price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
-            </span>
+            {featured && (
+              <span className="rounded-md border border-bk-gold/70 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-bk-gold">
+                Nổi bật
+              </span>
+            )}
           </div>
+          <span className={`font-display font-medium leading-none ${featured ? 'text-6xl' : 'text-3xl'}`}>
+            {courseGlyph(props.courseName)}
+          </span>
         </div>
 
         <div className="flex flex-1 flex-col p-5">
-          <div className="flex items-start justify-between gap-4">
-            <h2 className="text-xl font-semibold tracking-tight text-slate-900">
-              {props.courseName}
-            </h2>
-            <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
-              Chi tiết
-            </span>
-          </div>
-
-          <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-600">
-            {props.description}
+          <h3 className="font-display text-lg font-semibold text-bk-ink">{props.courseName}</h3>
+          <p className="mt-1 text-xs text-bk-slate">
+            {[props.teacher, props.language].filter(Boolean).join(' · ')}
+          </p>
+          <p className="mb-5 mt-3 line-clamp-2 text-sm leading-6 text-bk-slate">
+            {props.description || 'Chưa có mô tả cho khóa học này.'}
           </p>
 
-          <div className="mt-6 grid gap-3">
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                Giảng viên
-              </p>
-              <p className="mt-1 text-sm font-medium text-slate-700">{props.teacher}</p>
-            </div>
-            <div className="rounded-2xl border border-slate-200 bg-white p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                Trải nghiệm
-              </p>
-              <p className="mt-1 text-sm text-slate-600">
-                Xem đề cương trước khi đăng ký và theo dõi nội dung từng chương rõ ràng hơn.
-              </p>
-            </div>
+          <div className="mt-auto flex items-end justify-between gap-3 border-t border-bk-line pt-4">
+            <span className="font-display text-lg font-semibold text-bk-navy">
+              {formatVnd(props.price)}
+            </span>
+            {avgQuiz > 0 ? (
+              <span className="text-xs text-bk-slate">
+                Quiz TB <span className="font-semibold text-bk-ink">{avgQuiz.toFixed(1).replace('.', ',')}</span>/10
+              </span>
+            ) : (
+              <span className="button-link text-xs">
+                Xem khóa học <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+              </span>
+            )}
           </div>
         </div>
-      </div>
+      </article>
 
       {modal && ReactDOM.createPortal(
         <>
-          <div className="fixed inset-0 z-40 bg-slate-950/55 backdrop-blur-sm" onClick={() => setModal(false)} />
-          <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
-            <div className="w-full max-w-3xl overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-2xl">
-              <div className="border-b border-slate-200 bg-slate-900 px-6 py-6 text-white">
+          <div className="fixed inset-0 z-40 bg-bk-ink/50" onClick={() => setModal(false)} />
+          <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 pointer-events-none">
+            <div className="pointer-events-auto w-full max-w-3xl overflow-hidden rounded-[10px] border border-bk-line bg-white">
+              <div className="bp-grid-dark bg-bk-navy px-6 py-6 text-white">
                 <div className="flex items-start justify-between gap-6">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-300">
-                      Tổng quan khóa học
+                    <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-white/60">
+                      {meta} · Đề cương
                     </p>
-                    <h3 className="mt-2 text-3xl font-semibold">{props.courseName}</h3>
-                    <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">
-                      Xem trước các chương học để nắm được cấu trúc nội dung và chuẩn bị tốt hơn trước khi đăng ký.
-                    </p>
+                    <h3 className="mt-2 text-2xl font-semibold sm:text-3xl">{props.courseName}</h3>
+                    <p className="mt-2 text-sm text-white/70">Giảng viên {props.teacher}</p>
                   </div>
                   <button
                     type="button"
-                    className="rounded-xl border border-white/15 px-4 py-2 text-sm font-medium transition hover:bg-white/10"
+                    aria-label="Đóng"
+                    className="rounded-md border border-white/20 p-2 transition hover:bg-white/10"
                     onClick={() => setModal(false)}
                   >
-                    Đóng
+                    <X className="h-4 w-4" />
                   </button>
                 </div>
               </div>
 
-              <div className="grid gap-0 lg:grid-cols-[1.1fr_0.9fr]">
-                <div className="max-h-[60vh] space-y-3 overflow-y-auto p-6">
-                  {section?.length > 0 ? section.map((s, index) => (
-                    <div key={index} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-700">
-                        Chương {index + 1}
-                      </p>
-                      <p className="mt-2 text-base font-semibold text-slate-900">{s.name}</p>
-                    </div>
-                  )) : (
-                    <p className="text-sm text-slate-600">Chưa có nội dung chi tiết cho khóa học này.</p>
+              <div className="grid lg:grid-cols-[1.2fr_0.8fr]">
+                <div className="max-h-[55vh] overflow-y-auto p-6">
+                  <p className="eyebrow">Nội dung khóa học · {section?.length || 0} section</p>
+                  {section?.length > 0 ? (
+                    <ol className="mt-4 divide-y divide-bk-line border-y border-bk-line">
+                      {section.map((s, index) => (
+                        <li key={index} className="flex items-baseline gap-4 py-3">
+                          <span className="font-mono text-xs text-bk-blue">{String(index + 1).padStart(2, '0')}</span>
+                          <span className="text-sm font-medium text-bk-ink">{s.name}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  ) : (
+                    <p className="mt-4 text-sm text-bk-slate">Chưa có nội dung chi tiết cho khóa học này.</p>
                   )}
                 </div>
 
-                <div className="border-t border-slate-200 bg-slate-50 p-6 lg:border-l lg:border-t-0">
-                  <div className="rounded-3xl border border-slate-200 bg-white p-5">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                      Học phí
-                    </p>
-                    <p className="mt-2 text-3xl font-semibold text-slate-900">
-                      {props.price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
-                    </p>
-                    <div className="mt-5 space-y-3 text-sm text-slate-600">
-                      <p>Giảng viên: <span className="font-medium text-slate-800">{props.teacher}</span></p>
-                      <p>Nội dung được chia theo từng chương để bạn dễ theo dõi tiến độ.</p>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 flex flex-col gap-3">
-                    <button
-                      type="button"
-                      className="button-primary"
-                      onClick={handleBuyNow}
-                    >
-                      Đăng ký ngay
+                <div className="flex flex-col border-t border-bk-line bg-bk-mist p-6 lg:border-l lg:border-t-0">
+                  <p className="eyebrow text-bk-slate">Học phí</p>
+                  <p className="mt-2 font-display text-3xl font-semibold text-bk-navy">
+                    {formatVnd(props.price)}
+                  </p>
+                  <p className="mt-4 text-sm leading-6 text-bk-slate">
+                    Nội dung được chia theo từng section, kèm quiz chấm điểm ngay sau mỗi chương.
+                  </p>
+                  <div className="mt-6 flex flex-col gap-2.5 lg:mt-auto">
+                    <button type="button" className="button-primary" onClick={handleBuyNow}>
+                      Đăng ký ngay <ArrowRight className="h-4 w-4" />
                     </button>
-                    <button
-                      type="button"
-                      className="button-secondary"
-                      onClick={() => setModal(false)}
-                    >
+                    <button type="button" className="button-secondary" onClick={() => setModal(false)}>
                       Để sau
                     </button>
                   </div>
@@ -191,42 +223,29 @@ function CourseCard(props: any) {
 
       {paymentModal && ReactDOM.createPortal(
         <>
-          <div className="fixed inset-0 z-50 bg-slate-950/55 backdrop-blur-sm" onClick={() => setPaymentModal(false)} />
-          <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-            <div className="w-full max-w-lg rounded-[28px] border border-slate-200 bg-white p-7 shadow-2xl">
-              <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-700">
-                Thanh toán
-              </span>
-              <h3 className="mt-4 text-2xl font-semibold text-slate-900">
-                Xác nhận đăng ký khóa học
-              </h3>
-              <div className="mt-6 space-y-4 rounded-3xl bg-slate-50 p-5">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Số tiền</p>
-                  <p className="mt-1 text-lg font-semibold text-slate-900">
-                    {props.price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
-                  </p>
+          <div className="fixed inset-0 z-50 bg-bk-ink/50" onClick={() => setPaymentModal(false)} />
+          <div className="fixed inset-0 z-50 flex items-center justify-center px-4 pointer-events-none">
+            <div className="pointer-events-auto w-full max-w-md rounded-[10px] border border-bk-line bg-white p-7">
+              <p className="eyebrow">Thanh toán</p>
+              <h3 className="mt-2 text-2xl font-semibold text-bk-ink">Xác nhận đăng ký khóa học</h3>
+              <p className="mt-1 text-sm text-bk-slate">{props.courseName}</p>
+              <dl className="mt-6 divide-y divide-bk-line border-y border-bk-line text-sm">
+                <div className="flex items-center justify-between py-3">
+                  <dt className="text-bk-slate">Số tiền</dt>
+                  <dd className="font-display text-lg font-semibold text-bk-navy">{formatVnd(props.price)}</dd>
                 </div>
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Tài khoản thanh toán</p>
-                  <p className="mt-1 text-sm leading-6 text-slate-700">
-                    {user.bankAccount} - {user.bankName} - {user.firstName} {user.lastName}
-                  </p>
+                <div className="flex items-start justify-between gap-6 py-3">
+                  <dt className="shrink-0 text-bk-slate">Tài khoản thanh toán</dt>
+                  <dd className="text-right font-mono text-xs leading-5 text-bk-ink">
+                    {user.bankAccount} · {user.bankName}<br />{user.firstName} {user.lastName}
+                  </dd>
                 </div>
-              </div>
+              </dl>
               <div className="mt-6 flex gap-3">
-                <button
-                  type="button"
-                  className="button-secondary flex-1"
-                  onClick={() => setPaymentModal(false)}
-                >
+                <button type="button" className="button-secondary flex-1" onClick={() => setPaymentModal(false)}>
                   Hủy
                 </button>
-                <button
-                  type="button"
-                  className="button-primary flex-1"
-                  onClick={() => handlePaid(props.id)}
-                >
+                <button type="button" className="button-primary flex-1" onClick={() => handlePaid(props.id)}>
                   Xác nhận
                 </button>
               </div>

@@ -1,25 +1,39 @@
 "use client";
 import { defaultUserLogin } from "@/app/dtos/user.dto";
 import { userLoginState } from "@/state";
+import { LogOut, UserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRecoilValue, useSetRecoilState } from "recoil";
 
 interface AvatarDropdownProps {
-  avatar: string;
   name: string;
   email: string;
 }
 
-const AvatarDropdown: React.FC<AvatarDropdownProps> = ({ avatar, name, email }) => {
+export const getInitials = (name: string) =>
+  name
+    .split(" ")
+    .filter(Boolean)
+    .slice(-2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase() || "BK";
+
+const AvatarDropdown: React.FC<AvatarDropdownProps> = ({ name, email }) => {
   const [isOpen, setIsOpen] = useState(false);
   const setUserLogin = useSetRecoilState(userLoginState);
   const userLogin = useRecoilValue(userLoginState);
   const router = useRouter();
+  const ref = useRef<HTMLDivElement>(null);
 
-  const toggleDropdown = () => {
-    setIsOpen(!isOpen);
-  };
+  useEffect(() => {
+    const close = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) setIsOpen(false);
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, []);
 
   const handeLogout = () => {
     const confirm = window.confirm("Bạn có chắc chắn muốn đăng xuất không?");
@@ -34,48 +48,43 @@ const AvatarDropdown: React.FC<AvatarDropdownProps> = ({ avatar, name, email }) 
     : "/student/updatestu";
 
   return (
-    <div className="relative">
+    <div className="relative" ref={ref}>
       <button
-        id="avatarButton"
-        className="flex cursor-pointer items-center gap-2 rounded-lg bg-gray-100 px-3 py-2 shadow transition-all hover:bg-gray-200"
-        onClick={toggleDropdown}
+        type="button"
+        aria-label="Tài khoản"
+        aria-expanded={isOpen}
+        className="flex h-9 w-9 items-center justify-center rounded-full bg-bk-navy font-display text-xs font-semibold text-white transition hover:bg-bk-blue"
+        onClick={() => setIsOpen(!isOpen)}
       >
-        <img
-          src={avatar}
-          alt="User Avatar"
-          className="h-8 w-8 rounded-full"
-        />
-        <span className="text-sm font-medium text-gray-800">{name}</span>
+        {getInitials(name)}
       </button>
 
       {isOpen && (
-        <div
-          id="userDropdown"
-          className="absolute right-0 z-10 mt-2 w-44 divide-y divide-gray-100 rounded-lg bg-white shadow"
-        >
-          <div className="px-4 py-3 text-sm text-gray-900">
-            <div>{name}</div>
-            <div className="truncate font-medium text-gray-500">{email}</div>
+        <div className="absolute right-0 z-10 mt-2 w-60 overflow-hidden rounded-[10px] border border-bk-line bg-white shadow-[0_12px_32px_-12px_rgba(11,27,63,0.25)]">
+          <div className="border-b border-bk-line px-4 py-3">
+            <p className="text-sm font-semibold text-bk-ink">{name}</p>
+            <p className="truncate font-mono text-[11px] text-bk-slate">{email}</p>
           </div>
-          <ul className="py-2 text-sm text-gray-700">
-            <li>
-              <a
-                href="#"
-                className="block px-4 py-2 hover:bg-gray-100"
-                onClick={() => router.push(profilePath)}
-              >
-                Hồ sơ
-              </a>
-            </li>
-          </ul>
-          <div className="py-1">
-            <a
-              href="#"
-              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-              onClick={() => handeLogout()}
+          <div className="p-1.5">
+            <button
+              type="button"
+              className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm text-bk-ink hover:bg-bk-mist"
+              onClick={() => {
+                setIsOpen(false);
+                router.push(profilePath);
+              }}
             >
+              <UserRound className="h-4 w-4 text-bk-slate" strokeWidth={1.5} />
+              Hồ sơ
+            </button>
+            <button
+              type="button"
+              className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm text-[#C2410C] hover:bg-orange-50"
+              onClick={handeLogout}
+            >
+              <LogOut className="h-4 w-4" strokeWidth={1.5} />
               Đăng xuất
-            </a>
+            </button>
           </div>
         </div>
       )}

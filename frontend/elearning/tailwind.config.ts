@@ -15,6 +15,16 @@ const config: Config = {
   			hcmutDarkBlue: '#032B91',
   			hcmutLightBlue: '#1388DB',
 			grayBG: '#f6f8fc',
+  			bk: {
+  				navy: '#032B91',
+  				blue: '#1488DB',
+  				ink: '#0B1B3F',
+  				slate: '#5B6B8C',
+  				line: '#DCE3F0',
+  				mist: '#F4F7FC',
+  				gold: '#C9A227',
+  				night: '#0B1A3D'
+  			},
   			card: {
   				DEFAULT: 'hsl(var(--card))',
   				foreground: 'hsl(var(--card-foreground))'
@@ -53,6 +63,11 @@ const config: Config = {
   				'4': 'hsl(var(--chart-4))',
   				'5': 'hsl(var(--chart-5))'
   			}
+  		},
+  		fontFamily: {
+  			sans: ['var(--font-sans)', 'Segoe UI', 'sans-serif'],
+  			display: ['var(--font-display)', 'var(--font-sans)', 'sans-serif'],
+  			mono: ['var(--font-mono)', 'ui-monospace', 'monospace']
   		},
   		borderRadius: {
   			lg: 'var(--radius)',

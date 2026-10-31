@@ -1,7 +1,5 @@
 'use client';
 import { useEffect, useState } from "react";
-import Header from "../teacher_components/header";
-import Sidebar from "../teacher_components/sidebar";
 import { useRecoilState } from "recoil";
 import { userLoginState } from "@/state";
 import * as request from '@/app/axios/axios';
@@ -62,13 +60,8 @@ const RevenuePage = () => {
   return (
     <main className="section-shell py-8">
       <div className="grid min-h-screen grid-cols-12 gap-6">
-        <div className="col-span-12">
-          {Header(userLogin.lastName + ' ' + userLogin.firstName)}
-        </div>
 
-        {Sidebar(userLogin.firstName, userLogin.lastName)}
-
-        <section className="col-span-10 space-y-6">
+        <section className="col-span-12 space-y-6">
           <div className="rounded-[30px] border border-slate-200 bg-white p-8 shadow-sm">
             <span className="inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">
               Revenue Overview

@@ -1,87 +1,60 @@
 "use client";
 
 import AvatarDropdown from "./AvatarDropdown";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useRecoilValue } from "recoil";
 import { userLoginState } from "@/state";
-import Image from "next/image";
+import BrandMark from "./BrandMark";
+
+const studentLinks = [
+  { label: "Khóa học của tôi", href: "/student/mycourse" },
+  { label: "Bảng điểm", href: "/student/tablescore" },
+  { label: "Lộ trình", href: "/student/roadmap" },
+];
+
+const teacherLinks = [
+  { label: "Dashboard", href: "/teacher" },
+  { label: "Quản lý khóa học", href: "/teacher/courses" },
+];
 
 const BKNavbar2 = () => {
   const userLogin = useRecoilValue(userLoginState);
-  const router = useRouter();
+  const pathname = usePathname();
 
-  const role = String(userLogin.role || "").toLowerCase();
-  const isTeacher = role === "teacher";
+  const isTeacher = String(userLogin.role || "").toLowerCase() === "teacher";
+  const links = isTeacher ? teacherLinks : studentLinks;
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 backdrop-blur-md">
-      <nav className="section-shell flex items-center justify-between py-4">
-        <button
-          type="button"
-          className="flex items-center gap-3 text-left"
-          onClick={() => router.push("/")}
-        >
-          <Image
-            src="https://lms.hcmut.edu.vn/pluginfile.php/3/theme_academi/logo/1725955904/logoBK.png"
-            alt="Bách Khoa"
-            width={46}
-            height={46}
-            className="h-11 w-11 object-contain"
-          />
-          <div>
-            <p className="text-sm font-semibold text-slate-900">Bách Khoa E-Learning</p>
-            <p className="text-xs text-slate-500">Không gian học tập của bạn</p>
-          </div>
-        </button>
+    <header className="sticky top-0 z-50 border-b border-bk-line bg-white">
+      <nav className="section-shell flex h-16 items-center justify-between gap-4">
+        <Link href="/" aria-label="Trang chủ">
+          <BrandMark subtitle="" />
+        </Link>
 
-        <div className="hidden items-center gap-6 md:flex">
-          <button
-            className="text-sm font-medium text-slate-600 transition hover:text-sky-800"
-            onClick={() => router.push("/")}
-          >
-            Trang chủ
-          </button>
-
-          {isTeacher ? (
-            <>
-              <button
-                className="text-sm font-medium text-slate-600 transition hover:text-sky-800"
-                onClick={() => router.push("/teacher")}
+        <div className="hidden items-center gap-1 rounded-lg border border-bk-line bg-bk-mist p-1 md:flex">
+          {links.map((link) => {
+            const active = pathname === link.href || pathname?.startsWith(`${link.href}/`);
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`rounded-md px-4 py-1.5 text-sm transition-colors ${
+                  active
+                    ? "border border-bk-line bg-white font-semibold text-bk-navy"
+                    : "border border-transparent text-bk-slate hover:text-bk-ink"
+                }`}
               >
-                Dashboard
-              </button>
-              <button
-                className="text-sm font-medium text-slate-600 transition hover:text-sky-800"
-                onClick={() => router.push("/teacher/courses")}
-              >
-                Quản lý khóa học
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                className="text-sm font-medium text-slate-600 transition hover:text-sky-800"
-                onClick={() => router.push("/student/mycourse")}
-              >
-                Khóa học của tôi
-              </button>
-              <button
-                className="text-sm font-medium text-slate-600 transition hover:text-sky-800"
-                onClick={() => router.push("/student/roadmap")}
-              >
-                Lộ trình
-              </button>
-            </>
-          )}
+                {link.label}
+              </Link>
+            );
+          })}
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white px-2 py-1 shadow-sm">
-          <AvatarDropdown
-            avatar={`https://ui-avatars.com/api/?name=${encodeURIComponent(userLogin.firstName + ' ' + userLogin.lastName)}&background=random`}
-            name={`${userLogin.firstName} ${userLogin.lastName}`}
-            email={userLogin.email}
-          />
-        </div>
+        <AvatarDropdown
+          name={`${userLogin.firstName} ${userLogin.lastName}`.trim()}
+          email={userLogin.email}
+        />
       </nav>
     </header>
   );

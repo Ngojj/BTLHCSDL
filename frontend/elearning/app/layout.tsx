@@ -1,18 +1,23 @@
-"use client"; 
-import localFont from "next/font/local";
+"use client";
+import { Be_Vietnam_Pro, JetBrains_Mono, Lexend } from "next/font/google";
 import "./globals.css";
 import { RecoilRoot } from "recoil";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
+const fontSans = Be_Vietnam_Pro({
+  subsets: ["latin", "vietnamese"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-sans",
 });
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  weight: "100 900",
+const fontDisplay = Lexend({
+  subsets: ["latin", "vietnamese"],
+  weight: ["500", "600", "700"],
+  variable: "--font-display",
+});
+const fontMono = JetBrains_Mono({
+  subsets: ["latin", "vietnamese"],
+  weight: ["400", "500"],
+  variable: "--font-mono",
 });
 
 
@@ -26,9 +31,9 @@ export default function RootLayout({
   return (
     <GoogleOAuthProvider clientId={googleClientId}>
       <RecoilRoot>
-        <html lang="en">
+        <html lang="vi">
           <body
-            className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen`}
+            className={`${fontSans.variable} ${fontDisplay.variable} ${fontMono.variable} antialiased min-h-screen`}
           >
             {children}
           </body>
