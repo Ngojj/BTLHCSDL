@@ -1,23 +1,27 @@
 "use client";
-import { Be_Vietnam_Pro, JetBrains_Mono, Lexend } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { RecoilRoot } from "recoil";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
-const fontSans = Be_Vietnam_Pro({
-  subsets: ["latin", "vietnamese"],
-  weight: ["400", "500", "600", "700"],
+const fontSans = localFont({
+  src: [
+    { path: "./fonts/BeVietnamPro-Regular.woff", weight: "400" },
+    { path: "./fonts/BeVietnamPro-Medium.woff", weight: "500" },
+    { path: "./fonts/BeVietnamPro-SemiBold.woff", weight: "600" },
+    { path: "./fonts/BeVietnamPro-Bold.woff", weight: "700" },
+  ],
   variable: "--font-sans",
 });
-const fontDisplay = Lexend({
-  subsets: ["latin", "vietnamese"],
-  weight: ["500", "600", "700"],
+const fontDisplay = localFont({
+  src: "./fonts/Lexend.woff",
   variable: "--font-display",
+  weight: "100 900",
 });
-const fontMono = JetBrains_Mono({
-  subsets: ["latin", "vietnamese"],
-  weight: ["400", "500"],
+const fontMono = localFont({
+  src: "./fonts/JetBrainsMono.woff",
   variable: "--font-mono",
+  weight: "100 800",
 });
 
 
