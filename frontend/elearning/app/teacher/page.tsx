@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useRecoilState } from 'recoil';
@@ -22,23 +22,24 @@ import { formatVnd } from '@/components/CourseCard';
 
 ChartJS.register(LineElement, PointElement, LinearScale, CategoryScale, Filler, Tooltip);
 
-interface Course {
-  courseId: number;
-  courseName: string;
-  language: string;
-  description: string;
-  creationTime: string;
-  price: number | string;
-}
-
-interface JoinRecord {
-  studentId: number;
-  courseId: number;
-  courseName: string;
-  price: number;
-  progress: number;
-  dateStart: string;
-  dateComplete: string | null;
+// Shape of GET /analytics/teacher/overview — every figure below is computed by the database.
+interface Overview {
+  months: number;
+  totals: {
+    courses: number;
+    enrollments: number;
+    students: number;
+    revenue: number;
+    completed: number;
+    avgProgress: number;
+    quizAttempts: number;
+    avgQuizScore: number | null;
+  };
+  revenueByMonth: { month: string; revenue: number; enrollments: number; growthPct: number | null }[];
+  bestMonth: { month: string; revenue: number } | null;
+  courses: { courseId: number; name: string; price: number; students: number; revenue: number; completionRate: number; avgScore: number | null; revenueRank: number }[];
+  scoreDistribution: { bucket: string; count: number }[];
+  recentActivity: { type: 'enroll' | 'complete'; at: string; student: string; course: string }[];
 }
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -50,19 +51,21 @@ const shortMoney = (value: number) => {
 };
 
 const timeAgo = (date: string) => {
-  const diff = Date.now() - new Date(date).getTime();
-  const days = Math.floor(diff / DAY);
+  const days = Math.floor((Date.now() - new Date(date).getTime()) / DAY);
   if (days <= 0) return 'Hôm nay';
   if (days === 1) return 'Hôm qua';
   if (days < 30) return `${days} ngày trước`;
   return new Date(date).toLocaleDateString('vi-VN');
 };
 
+const growthText = (pct: number | null) =>
+  pct === null ? 'Chưa có tháng trước để so sánh' : `${pct >= 0 ? '+' : ''}${pct.toString().replace('.', ',')}% so với tháng trước`;
+
 const DashBoard = () => {
   const [userLogin, setUserLogin] = useRecoilState(userLoginState)
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [joins, setJoins] = useState<JoinRecord[]>([]);
+  const [overview, setOverview] = useState<Overview | null>(null);
   const [range, setRange] = useState<6 | 12>(12);
+  const [loadError, setLoadError] = useState('');
   const router = useRouter()
 
   useEffect(() => {
@@ -80,37 +83,27 @@ const DashBoard = () => {
     }
   }, [router, setUserLogin])
 
-  const fetchCourses = async () => {
+  const fetchOverview = async () => {
     try {
-      const response = await request.get(`/course/teacherId/${userLogin.id}`);
-      if (response.status === 200) setCourses(response.data);
+      setLoadError('');
+      setOverview(await request.get(`/analytics/teacher/overview?months=${range}`));
     } catch (error) {
-      console.error('Error fetching courses:', error);
-    }
-  };
-
-  const fetchJoinData = async () => {
-    try {
-      const response = await request.get(`/join/teacherId/${userLogin.id}`);
-      setJoins(response.status === 200 ? response.data : []);
-    } catch (error) {
-      console.error('Error fetching join data:', error);
-      setJoins([]);
+      console.error('Error fetching dashboard:', error);
+      setLoadError('Không thể tải số liệu dashboard. Vui lòng thử lại.');
     }
   };
 
   useEffect(() => {
     if (!userLogin.id) return;
-    fetchCourses();
-    fetchJoinData();
-  }, [userLogin.id]);
+    fetchOverview();
+  }, [userLogin.id, range]);
 
   const handleDeleteCourse = async (id: number) => {
     if (!confirm('Bạn có chắc chắn muốn xóa khóa học này?')) return;
     try {
       const response = await request.del(`/course/delete/id/${id}`);
       if (response.message === "success") {
-        fetchCourses();
+        fetchOverview();
       } else {
         alert('Xóa khóa học thất bại. Vui lòng thử lại.');
       }
@@ -120,66 +113,39 @@ const DashBoard = () => {
     }
   };
 
-  const stats = useMemo(() => {
-    const recent = joins.filter((j) => Date.now() - new Date(j.dateStart).getTime() <= 30 * DAY);
-    const revenue = joins.reduce((sum, j) => sum + Number(j.price || 0), 0);
-    const completed = joins.filter((j) => j.progress === 100).length;
-    const avgProgress = joins.length ? Math.round(joins.reduce((s, j) => s + j.progress, 0) / joins.length) : 0;
+  const totals = overview?.totals;
+  const months = overview?.revenueByMonth ?? [];
+  const thisMonth = months[months.length - 1];
+  const rangeTotal = months.reduce((sum, m) => sum + m.revenue, 0);
+  const bestIndex = overview?.bestMonth ? months.findIndex((m) => m.month === overview.bestMonth!.month) : -1;
+  const revenue = shortMoney(totals?.revenue ?? 0);
+  const courseRows = [...(overview?.courses ?? [])].sort((a, b) => b.students - a.students).slice(0, 6);
+  const maxStudents = Math.max(1, ...courseRows.map((c) => c.students));
+  const scoreBuckets = overview?.scoreDistribution ?? [];
+  const maxBucket = Math.max(1, ...scoreBuckets.map((b) => b.count));
+  const perfect = scoreBuckets.find((b) => b.bucket === '10')?.count ?? 0;
+  const teacherName = userLogin.lastName || userLogin.firstName;
 
-    const byCourse = new Map<number, { name: string; students: number }>();
-    joins.forEach((j) => {
-      const item = byCourse.get(j.courseId) || { name: j.courseName, students: 0 };
-      item.students += 1;
-      byCourse.set(j.courseId, item);
-    });
-
-    const progressBuckets = [0, 0, 0, 0, 0, 0];
-    joins.forEach((j) => {
-      progressBuckets[j.progress >= 100 ? 5 : Math.floor(j.progress / 20)] += 1;
-    });
-
-    return {
-      students: new Set(joins.map((j) => j.studentId)).size,
-      newStudents: new Set(recent.map((j) => j.studentId)).size,
-      revenue,
-      recentRevenue: recent.reduce((sum, j) => sum + Number(j.price || 0), 0),
-      completed,
-      avgProgress,
-      byCourse,
-      progressBuckets,
-    };
-  }, [joins]);
-
-  const monthly = useMemo(() => {
-    const now = new Date();
-    const months = Array.from({ length: range }, (_, i) => {
-      const d = new Date(now.getFullYear(), now.getMonth() - (range - 1 - i), 1);
-      return { key: `${d.getFullYear()}-${d.getMonth()}`, label: `T${d.getMonth() + 1}`, value: 0 };
-    });
-    joins.forEach((j) => {
-      const d = new Date(j.dateStart);
-      const month = months.find((m) => m.key === `${d.getFullYear()}-${d.getMonth()}`);
-      if (month) month.value += Number(j.price || 0);
-    });
-    return months;
-  }, [joins, range]);
-
-  const maxIndex = monthly.reduce((best, m, i) => (m.value > monthly[best].value ? i : best), 0);
-  const rangeTotal = monthly.reduce((sum, m) => sum + m.value, 0);
+  const kpis = [
+    { label: 'Khóa học', value: String(totals?.courses ?? 0), unit: '', note: `${overview?.courses.filter((c) => c.students > 0).length ?? 0} khóa có học viên` },
+    { label: 'Sinh viên', value: (totals?.students ?? 0).toLocaleString('vi-VN'), unit: '', note: `+${thisMonth?.enrollments ?? 0} lượt đăng ký tháng này` },
+    { label: 'Doanh thu', value: revenue.value, unit: revenue.unit, note: growthText(thisMonth?.growthPct ?? null), highlight: true },
+    { label: 'Điểm quiz TB', value: totals?.avgQuizScore != null ? totals.avgQuizScore.toFixed(1).replace('.', ',') : '—', unit: totals?.avgQuizScore != null ? '/10' : '', note: `Trên ${(totals?.quizAttempts ?? 0).toLocaleString('vi-VN')} lượt làm` },
+  ];
 
   const chartData = {
-    labels: monthly.map((m) => m.label),
+    labels: months.map((m) => `T${Number(m.month.slice(5))}`),
     datasets: [
       {
-        data: monthly.map((m) => m.value / 1_000_000),
+        data: months.map((m) => m.revenue / 1_000_000),
         borderColor: '#032B91',
         borderWidth: 2,
         backgroundColor: 'rgba(20, 136, 219, 0.12)',
         fill: true,
         tension: 0.25,
-        pointRadius: monthly.map((_, i) => (i === maxIndex && monthly[i].value > 0 ? 6 : 3)),
-        pointBackgroundColor: monthly.map((_, i) => (i === maxIndex && monthly[i].value > 0 ? '#C9A227' : '#ffffff')),
-        pointBorderColor: monthly.map((_, i) => (i === maxIndex && monthly[i].value > 0 ? '#C9A227' : '#032B91')),
+        pointRadius: months.map((_, i) => (i === bestIndex ? 6 : 3)),
+        pointBackgroundColor: months.map((_, i) => (i === bestIndex ? '#C9A227' : '#ffffff')),
+        pointBorderColor: months.map((_, i) => (i === bestIndex ? '#C9A227' : '#032B91')),
       },
     ],
   };
@@ -211,28 +177,6 @@ const DashBoard = () => {
     },
   };
 
-  const activities = useMemo(() => {
-    const items = joins.flatMap((j) => {
-      const list: { date: string; type: 'join' | 'done'; j: JoinRecord }[] = [{ date: j.dateStart, type: 'join', j }];
-      if (j.dateComplete) list.push({ date: j.dateComplete, type: 'done', j });
-      return list;
-    });
-    return items.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
-  }, [joins]);
-
-  const revenue = shortMoney(stats.revenue);
-  const courseRows = Array.from(stats.byCourse.values()).sort((a, b) => b.students - a.students).slice(0, 6);
-  const maxStudents = Math.max(1, ...courseRows.map((c) => c.students));
-  const maxBucket = Math.max(1, ...stats.progressBuckets);
-  const teacherName = userLogin.lastName || userLogin.firstName;
-
-  const kpis = [
-    { label: 'Khóa học', value: String(courses.length), unit: '', note: `${stats.byCourse.size} khóa có học viên` },
-    { label: 'Sinh viên', value: stats.students.toLocaleString('vi-VN'), unit: '', note: `+${stats.newStudents} trong 30 ngày` },
-    { label: 'Doanh thu', value: revenue.value, unit: revenue.unit, note: `+${formatVnd(stats.recentRevenue)} trong 30 ngày`, highlight: true },
-    { label: 'Tiến độ TB', value: String(stats.avgProgress), unit: '%', note: `${stats.completed} lượt hoàn thành` },
-  ];
-
   return (
     <main className="space-y-5 px-4 py-8 sm:px-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -257,6 +201,13 @@ const DashBoard = () => {
           ))}
         </div>
       </div>
+
+      {loadError && (
+        <div className="flex items-center justify-between rounded-md border-l-2 border-[#C2410C] bg-orange-50 px-4 py-3 text-sm text-[#9A3412]">
+          {loadError}
+          <button type="button" className="font-semibold underline" onClick={fetchOverview}>Thử lại</button>
+        </div>
+      )}
 
       {/* KPI */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -299,11 +250,11 @@ const DashBoard = () => {
         <section className="card p-6">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-semibold text-bk-ink">Sinh viên theo khóa</h2>
-            <span className="font-mono text-[11px] text-bk-slate">Σ {joins.length}</span>
+            <span className="font-mono text-[11px] text-bk-slate">Σ {totals?.enrollments ?? 0}</span>
           </div>
           <ul className="mt-6 space-y-4">
             {courseRows.length > 0 ? courseRows.map((course, index) => (
-              <li key={course.name}>
+              <li key={course.courseId}>
                 <div className="flex justify-between text-sm">
                   <span className="truncate pr-4 text-bk-ink">{course.name}</span>
                   <span className="font-mono text-xs text-bk-slate">{course.students}</span>
@@ -340,13 +291,15 @@ const DashBoard = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-bk-line">
-              {courses.length > 0 ? courses.slice(0, 6).map((course) => (
+              {overview && overview.courses.length > 0 ? overview.courses.slice(0, 6).map((course) => (
                 <tr key={course.courseId}>
                   <td className="px-6 py-3">
-                    <p className="font-medium text-bk-ink">{course.courseName}</p>
-                    <p className="font-mono text-[10px] text-bk-slate">#{String(course.courseId).padStart(4, '0')} · {stats.byCourse.get(course.courseId)?.students || 0} SV</p>
+                    <p className="font-medium text-bk-ink">{course.name}</p>
+                    <p className="font-mono text-[10px] text-bk-slate">
+                      #{String(course.courseId).padStart(4, '0')} · {course.students} SV · hạng {course.revenueRank}
+                    </p>
                   </td>
-                  <td className="px-3 py-3 text-right font-semibold text-bk-ink">{formatVnd(course.price)}</td>
+                  <td className="px-3 py-3 text-right font-semibold text-bk-ink">{course.price > 0 ? formatVnd(course.price) : 'Miễn phí'}</td>
                   <td className="px-6 py-3">
                     <div className="flex justify-end gap-1">
                       <button
@@ -371,7 +324,9 @@ const DashBoard = () => {
               )) : (
                 <tr>
                   <td colSpan={3} className="px-6 py-10 text-center text-sm text-bk-slate">
-                    Chưa có khóa học nào. <Link href="/teacher/create" className="font-semibold text-bk-blue">Tạo khóa học</Link>
+                    {overview ? (
+                      <>Chưa có khóa học nào. <Link href="/teacher/create" className="font-semibold text-bk-blue">Tạo khóa học</Link></>
+                    ) : 'Đang tải...'}
                   </td>
                 </tr>
               )}
@@ -381,49 +336,50 @@ const DashBoard = () => {
 
         <section className="card p-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-semibold text-bk-ink">Phân bố tiến độ</h2>
-            <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-bk-slate">{joins.length} lượt</span>
+            <h2 className="text-base font-semibold text-bk-ink">Phân bố điểm quiz</h2>
+            <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-bk-slate">{totals?.quizAttempts ?? 0} lượt</span>
           </div>
           <div className="mt-6 flex h-44 items-end gap-2">
-            {stats.progressBuckets.map((count, index) => (
-              <div key={index} className="flex flex-1 flex-col items-center justify-end gap-1.5 self-stretch">
-                <span className="font-mono text-[10px] text-bk-slate">{count}</span>
+            {scoreBuckets.map((bucket) => (
+              <div key={bucket.bucket} className="flex flex-1 flex-col items-center justify-end gap-1.5 self-stretch">
+                <span className="font-mono text-[10px] text-bk-slate">{bucket.count}</span>
                 <div
                   className="w-full rounded-t-[3px]"
                   style={{
-                    height: `${Math.max(4, (count / maxBucket) * 100)}%`,
-                    background: index === 5 ? 'var(--bk-gold)' : count === maxBucket ? 'var(--bk-navy)' : '#9CCBEF',
+                    height: `${Math.max(4, (bucket.count / maxBucket) * 100)}%`,
+                    background: bucket.bucket === '10' ? 'var(--bk-gold)' : bucket.count === maxBucket ? 'var(--bk-navy)' : '#9CCBEF',
                   }}
                 />
               </div>
             ))}
           </div>
           <div className="mt-2 flex gap-2 font-mono text-[10px] text-bk-slate">
-            {['<20', '20', '40', '60', '80', '100'].map((label) => (
-              <span key={label} className="flex-1 text-center">{label}</span>
+            {scoreBuckets.map((bucket) => (
+              <span key={bucket.bucket} className="flex-1 text-center">{bucket.bucket}</span>
             ))}
           </div>
           <p className="mt-4 text-xs text-bk-slate">
-            <span className="font-semibold text-[#8A6D12]">{stats.completed}</span> lượt đã hoàn thành 100% · trung bình {stats.avgProgress}%
+            <span className="font-semibold text-[#8A6D12]">{perfect}</span> lượt đạt 10/10
+            {totals?.avgQuizScore != null && <> · điểm trung bình {totals.avgQuizScore.toFixed(1).replace('.', ',')}</>}
           </p>
         </section>
 
         <section className="card p-6">
           <h2 className="text-base font-semibold text-bk-ink">Hoạt động gần đây</h2>
           <ul className="mt-5 space-y-4">
-            {activities.length > 0 ? activities.map((item, index) => (
+            {overview && overview.recentActivity.length > 0 ? overview.recentActivity.slice(0, 5).map((item, index) => (
               <li key={index} className="flex gap-3">
-                <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${item.type === 'done' ? 'bg-[#1F8A5B]' : 'bg-bk-blue'}`} />
+                <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${item.type === 'complete' ? 'bg-[#1F8A5B]' : 'bg-bk-blue'}`} />
                 <div>
                   <p className="text-sm leading-5 text-bk-ink">
-                    Sinh viên #{item.j.studentId} {item.type === 'done' ? 'hoàn thành' : 'đăng ký'}{' '}
-                    <span className="font-medium">{item.j.courseName}</span>
+                    {item.student} {item.type === 'complete' ? 'hoàn thành' : 'đăng ký'}{' '}
+                    <span className="font-medium">{item.course}</span>
                   </p>
-                  <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-bk-slate">{timeAgo(item.date)}</p>
+                  <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-bk-slate">{timeAgo(item.at)}</p>
                 </div>
               </li>
             )) : (
-              <li className="text-sm text-bk-slate">Chưa có hoạt động.</li>
+              <li className="text-sm text-bk-slate">{overview ? 'Chưa có hoạt động.' : 'Đang tải...'}</li>
             )}
           </ul>
         </section>

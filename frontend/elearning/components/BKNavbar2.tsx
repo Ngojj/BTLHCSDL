@@ -11,6 +11,7 @@ const studentLinks = [
   { label: "Khóa học của tôi", href: "/student/mycourse" },
   { label: "Bảng điểm", href: "/student/tablescore" },
   { label: "Lộ trình", href: "/student/roadmap" },
+  { label: "Chứng chỉ", href: "/student/certificates" },
 ];
 
 const teacherLinks = [

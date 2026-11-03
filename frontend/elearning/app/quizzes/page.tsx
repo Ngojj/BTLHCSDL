@@ -22,6 +22,8 @@ const QuizPageContent = () => {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [score, setScore] = useState(0);
   const [flagged, setFlagged] = useState<number[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [result, setResult] = useState<{ correct: number; total: number; remaining: number } | null>(null);
 
   const fetchQuestions = async () => {
     try {
@@ -33,35 +35,12 @@ const QuizPageContent = () => {
     }
   };
 
+  // Answers stay in the browser until the quiz is submitted; the server grades them.
   const handleAnswerSelect = async (questionId: number, selectedAnswer: string) => {
-    try {
-      const existAnswerRecord = await request.get(`/answerRecord/question/${questionId}/student/${user.id}`);
-      if (existAnswerRecord.data.message === "Record not found by QuizId and StudentId") {
-        await request.post(`/answerRecord/create`, {
-          quizId: quiz?.id,
-          studentId: user.id,
-          questionId,
-          studentAns: selectedAnswer,
-        });
-      } else {
-        if (existAnswerRecord.data.data[0].studentAns !== selectedAnswer) {
-          await request.patch(`/answerRecord/update`, {
-            quizId: quiz?.id,
-            studentId: user.id,
-            questionId,
-            studentAns: selectedAnswer,
-          });
-        }
-      }
-
-      setUserAnswers((prevAnswers) => ({
-        ...prevAnswers,
-        [questionId]: selectedAnswer,
-      }));
-    } catch (e) {
-      console.log(e);
-      alert("Máy chủ đang gặp sự cố. Vui lòng thử lại.");
-    }
+    setUserAnswers((prevAnswers) => ({
+      ...prevAnswers,
+      [questionId]: selectedAnswer,
+    }));
   };
 
   const currentQuestion = questions[currentQuestionIndex];
@@ -84,33 +63,28 @@ const QuizPageContent = () => {
   };
 
   const handleSubmit = async () => {
-    const confirm = window.confirm("Bạn có chắc muốn nộp bài?");
-    if (!confirm) return;
+    if (submitting) return;
+    const unanswered = questions.filter((question) => !userAnswers[question.id]).length;
+    const confirmed = window.confirm(
+      unanswered > 0 ? `Bạn còn ${unanswered} câu chưa trả lời. Vẫn nộp bài?` : "Bạn có chắc muốn nộp bài?"
+    );
+    if (!confirmed) return;
 
     try {
-      let numberOfCorrect = 0;
+      setSubmitting(true);
+      const answers: { [key: string]: string } = {};
+      for (const [questionId, answer] of Object.entries(userAnswers)) answers[questionId] = answer;
 
-      for (const question of questions) {
-        if (userAnswers[question.id] === question.answer) {
-          numberOfCorrect += 1;
-        }
-      }
-
-      const calculatedScore = (numberOfCorrect / questions.length) * 10;
-      setScore(calculatedScore);
-
-      const dOResponse = await request.get(`/dO/quiz/${quiz?.id}/student/${user.id}`);
-      await request.post(`/dO/create`, {
-        quizId: quiz?.id,
-        studentId: user.id,
-        score: calculatedScore,
-        attemptOrder: dOResponse.data.data.length + 1,
-      });
-
+      // the server compares with the stored answers and records the attempt; the client never sends a score
+      const result = await request.post(`/quiz/${quiz?.id}/submit`, { answers });
+      setScore(result.data.score);
+      setResult({ correct: result.data.correct, total: result.data.total, remaining: result.data.remainingAttempts });
       setIsPopupOpen(true);
-    } catch (error) {
-      alert("Máy chủ xảy ra lỗi. Vui lòng thử lại.");
+    } catch (error: any) {
+      alert(error?.response?.data?.message || "Máy chủ xảy ra lỗi. Vui lòng thử lại.");
       console.log(error);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -231,8 +205,8 @@ const QuizPageContent = () => {
               Câu trước
             </button>
             {isLast ? (
-              <button type="button" onClick={handleSubmit} className="button-primary">
-                Nộp bài <Check className="h-4 w-4" />
+              <button type="button" onClick={handleSubmit} disabled={submitting} className="button-primary">
+                {submitting ? "Đang chấm..." : "Nộp bài"} <Check className="h-4 w-4" />
               </button>
             ) : (
               <button
@@ -308,7 +282,7 @@ const QuizPageContent = () => {
             </div>
             <div className="p-7">
               <p className="text-sm leading-6 text-bk-slate">
-                Đúng {Math.round((score / 10) * questions.length)}/{questions.length} câu. Kết quả đã được lưu vào bảng điểm.
+                Đúng {result?.correct ?? 0}/{result?.total ?? questions.length} câu. Kết quả đã được lưu vào bảng điểm{result && result.remaining > 0 ? ` — bạn còn ${result.remaining} lượt làm lại.` : "."}
               </p>
               <button
                 type="button"

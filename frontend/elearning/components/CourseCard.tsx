@@ -68,19 +68,30 @@ function CourseCard(props: any) {
     }
   };
 
-  const handleBuyNow = () => {
+  const handleBuyNow = async () => {
+    if (!user.id) {
+      window.location.assign("/login");
+      return;
+    }
     setModal(false);
+
+    // free courses are joined directly; paid ones go through the payment gateway
+    if (Number(props.price) === 0) {
+      try {
+        await request.post("/join/create", { courseId: Number(props.id) });
+        window.location.assign("/student/mycourse");
+      } catch (e: any) {
+        alert(e?.response?.data?.message || "Không thể đăng ký khóa học lúc này. Vui lòng thử lại.");
+      }
+      return;
+    }
     setPaymentModal(true);
   };
 
   const handlePaid = async (courseId: string) => {
     try {
-      const response = await request.post('/payment/create-link', {
-        courseId: Number(courseId),
-        studentId: Number(user.id),
-        price: props.price,
-        courseName: props.courseName
-      });
+      // only the course id is sent: the server takes the price from the database and the student from the token
+      const response = await request.post('/payment/create-link', { courseId: Number(courseId) });
 
       if (response.checkoutUrl) {
         window.location.href = response.checkoutUrl;

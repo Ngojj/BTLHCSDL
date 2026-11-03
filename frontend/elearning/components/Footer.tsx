@@ -8,6 +8,7 @@ const columns = [
       { label: "Khóa học", href: "/#khoa-hoc" },
       { label: "Lộ trình", href: "/student/roadmap" },
       { label: "Bảng điểm", href: "/student/tablescore" },
+      { label: "Xác minh chứng chỉ", href: "/verify" },
     ],
   },
   {

@@ -5,7 +5,7 @@ import * as request from "../app/axios/axios";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { JoinFullDto } from "@/app/dtos/join.dto";
-import { SectionDto } from "@/app/dtos/section.dto";
+import { CourseProgressDto, formatClock, isSectionDone } from "@/app/dtos/progress.dto";
 import { courseGlyph } from "./CourseCard";
 import { ArrowRight, Award, Play, Search } from "lucide-react";
 
@@ -25,14 +25,7 @@ function TableCourse({ userLoginId }: TableCourseProps) {
   const [courses, setCourses] = useState<JoinFullDto[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [filter, setFilter] = useState<Filter>("all");
-  const [sections, setSections] = useState<SectionDto[]>([]);
-  const [showUpdateModal, setShowUpdateModal] = useState(false);
-  const [selectedCourse, setSelectedCourse] = useState<JoinFullDto | null>(null);
-  const [updateData, setUpdateData] = useState({
-    progress: 0,
-    GPA: 0,
-    dateComplete: "",
-  });
+  const [outline, setOutline] = useState<CourseProgressDto | null>(null);
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<string>("");
   const router = useRouter();
@@ -70,16 +63,18 @@ function TableCourse({ userLoginId }: TableCourseProps) {
     [courses]
   );
 
+  // the server knows which lecture or quiz comes next; the browser does not have to guess from a percentage
   useEffect(() => {
     if (!current) return;
     request
-      .get(`/section/course/${current.courseId}`)
-      .then((response) => setSections(Array.isArray(response.data) ? response.data : []))
-      .catch(() => setSections([]));
+      .get(`/progress/course/${current.courseId}`)
+      .then((response) => setOutline(response))
+      .catch(() => setOutline(null));
   }, [current?.courseId]);
 
-  const doneSections = Math.round(((current?.progress || 0) / 100) * sections.length);
-  const nextSection = sections[Math.min(doneSections, sections.length - 1)];
+  const sections = outline?.sections ?? [];
+  const next = outline?.next ?? null;
+  const doneSections = sections.filter(isSectionDone).length;
 
   const filteredCourses = useMemo(
     () =>
@@ -97,46 +92,6 @@ function TableCourse({ userLoginId }: TableCourseProps) {
 
   const openCourse = (course: JoinFullDto) =>
     router.push(`/studentdb?course=${encodeURIComponent(JSON.stringify(course))}`);
-
-  const handleUpdate = (course: JoinFullDto) => {
-    setSelectedCourse(course);
-    setUpdateData({
-      progress: course.progress,
-      GPA: course.GPA || 0,
-      dateComplete: course.dateComplete
-        ? new Date(course.dateComplete).toISOString().split("T")[0]
-        : "",
-    });
-    setShowUpdateModal(true);
-    setError("");
-    setSuccess("");
-  };
-
-  const handleUpdateSubmit = async () => {
-    if (!selectedCourse) return;
-
-    setError("");
-    setSuccess("");
-
-    try {
-      const response = await request.patch("/join/update", {
-        courseId: selectedCourse.courseId,
-        studentId: selectedCourse.studentId,
-        progress: updateData.progress,
-        GPA: updateData.GPA || null,
-        dateComplete: updateData.dateComplete || null,
-        dateStart: selectedCourse.dateStart,
-      });
-
-      if (response.status === 200) {
-        setSuccess("Cập nhật thành công.");
-        setShowUpdateModal(false);
-        fetchCourse();
-      }
-    } catch (updateError: any) {
-      setError(updateError.response?.data?.message || "Có lỗi xảy ra khi cập nhật.");
-    }
-  };
 
   const handleDelete = async (courseId: number) => {
     if (!confirm("Bạn có chắc chắn muốn hủy đăng ký khóa học này?")) {
@@ -168,7 +123,7 @@ function TableCourse({ userLoginId }: TableCourseProps) {
 
   return (
     <div className="space-y-10">
-      {(error || success) && !showUpdateModal && (
+      {(error || success) && (
         <div
           className={`rounded-md border-l-2 px-4 py-3 text-sm ${
             error ? "border-[#C2410C] bg-orange-50 text-[#9A3412]" : "border-[#1F8A5B] bg-emerald-50 text-[#166534]"
@@ -211,25 +166,35 @@ function TableCourse({ userLoginId }: TableCourseProps) {
             <div>
               <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-bk-slate">Phần tiếp theo</p>
               <p className="mt-1.5 text-lg font-semibold text-bk-ink">
-                {nextSection
-                  ? `Section ${String(sections.indexOf(nextSection) + 1).padStart(2, "0")} · ${nextSection.name}`
+                {next
+                  ? `${next.type === "quiz" ? "Quiz" : "Bài giảng"} · ${next.name}`
+                  : outline?.completed
+                  ? "Bạn đã học hết nội dung khóa này"
                   : "Mở khóa học để xem nội dung"}
               </p>
+              {next && (
+                <p className="mt-1 text-sm text-bk-slate">
+                  {next.sectionName}
+                  {next.type === "lecture" && next.positionSeconds > 5 && ` · đang xem dở ${formatClock(next.positionSeconds)}`}
+                </p>
+              )}
               {sections.length > 0 && (
                 <>
                   <div className="mt-4 flex gap-1">
                     {sections.map((s, i) => (
                       <span
-                        key={i}
+                        key={s.id}
                         className={`h-1.5 flex-1 rounded-full ${
-                          i < doneSections ? "bg-bk-navy" : i === doneSections ? "bg-bk-blue" : "bg-bk-line"
+                          isSectionDone(s) ? "bg-bk-navy" : s.id === next?.sectionId ? "bg-bk-blue" : "bg-bk-line"
                         }`}
                       />
                     ))}
                   </div>
                   <div className="mt-1.5 flex justify-between font-mono text-[10px] text-bk-slate">
                     <span>SECTION 01</span>
-                    <span>{String(sections.length).padStart(2, "0")}</span>
+                    <span>
+                      {doneSections}/{String(sections.length).padStart(2, "0")} HOÀN THÀNH
+                    </span>
                   </div>
                 </>
               )}
@@ -237,9 +202,6 @@ function TableCourse({ userLoginId }: TableCourseProps) {
             <div className="flex flex-wrap gap-2.5">
               <button type="button" className="button-primary" onClick={() => openCourse(current)}>
                 <Play className="h-3.5 w-3.5 fill-white" /> Học tiếp
-              </button>
-              <button type="button" className="button-secondary" onClick={() => handleUpdate(current)}>
-                Cập nhật tiến độ
               </button>
             </div>
           </div>
@@ -311,10 +273,6 @@ function TableCourse({ userLoginId }: TableCourseProps) {
                         {done
                           ? `Hoàn thành ${formatDate(course.dateComplete)} · GPA ${formatScore(course.GPA)}`
                           : `Đăng ký ${formatDate(course.dateStart)}`}
-                        {" · "}
-                        <button type="button" className="text-bk-blue hover:text-bk-navy" onClick={() => handleUpdate(course)}>
-                          Cập nhật
-                        </button>
                         {" · "}
                         <button type="button" className="text-bk-slate hover:text-[#C2410C]" onClick={() => handleDelete(course.courseId)}>
                           Hủy đăng ký
@@ -393,77 +351,14 @@ function TableCourse({ userLoginId }: TableCourseProps) {
                   </li>
                 ))}
               </ul>
+              <Link href="/student/certificates" className="button-link mt-4 text-xs">
+                Chứng chỉ của tôi <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
             </div>
           )}
         </aside>
       </div>
 
-      {showUpdateModal && selectedCourse && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-bk-ink/50 px-4">
-          <div className="w-full max-w-md rounded-[10px] border border-bk-line bg-white p-7">
-            <p className="eyebrow">Cập nhật tiến độ</p>
-            <h2 className="mt-2 text-2xl font-semibold text-bk-ink">{selectedCourse.courseName}</h2>
-
-            <div className="mt-6 space-y-4">
-              <label className="block">
-                <span className="mb-1.5 block text-xs text-bk-slate">Tiến độ (%)</span>
-                <input
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={updateData.progress}
-                  onChange={(e) => setUpdateData({ ...updateData, progress: Number(e.target.value) })}
-                  className="input-field"
-                />
-              </label>
-              <label className="block">
-                <span className="mb-1.5 block text-xs text-bk-slate">GPA</span>
-                <input
-                  type="number"
-                  min="0"
-                  max="10"
-                  step="0.01"
-                  value={updateData.GPA}
-                  onChange={(e) => setUpdateData({ ...updateData, GPA: Number(e.target.value) })}
-                  className="input-field"
-                />
-              </label>
-              <label className="block">
-                <span className="mb-1.5 block text-xs text-bk-slate">Ngày hoàn thành</span>
-                <input
-                  type="date"
-                  value={updateData.dateComplete}
-                  onChange={(e) => setUpdateData({ ...updateData, dateComplete: e.target.value })}
-                  className="input-field"
-                />
-              </label>
-            </div>
-
-            {error && (
-              <div className="mt-4 rounded-md border-l-2 border-[#C2410C] bg-orange-50 px-4 py-3 text-sm text-[#9A3412]">
-                {error}
-              </div>
-            )}
-
-            <div className="mt-6 flex gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowUpdateModal(false);
-                  setSelectedCourse(null);
-                  setError("");
-                }}
-                className="button-secondary flex-1"
-              >
-                Đóng
-              </button>
-              <button type="button" onClick={handleUpdateSubmit} className="button-primary flex-1">
-                Lưu thay đổi
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
