@@ -1,20 +1,20 @@
 import { Router } from "express";
 import teacherController from "./teacher.controller";
+import { asUser, asTeacher, onlySelf, bindIdentity } from "../middleware/auth";
 
 const router = Router()
 
 // get all teacher
-router.get('/',  teacherController.getAllTeachers as any)
+router.get('/', asUser, teacherController.getAllTeachers as any);
 
 // get teacher by id
-router.get('/:id', teacherController.getTeacherById as any)
+router.get('/:id', asUser, teacherController.getTeacherById as any);
 
 // create new teacher
-router.post('/create', teacherController.createNewTeacher as any)
 
 // update teacher
-router.put('/update', teacherController.updateTeacher as any)
+router.put('/update', asTeacher, bindIdentity("id"), teacherController.updateTeacher as any);
 
 // delete teacher
-router.delete('/delete/:id', teacherController.deleteTeacher as any)
+router.delete('/delete/:id', asTeacher, onlySelf("id"), teacherController.deleteTeacher as any);
 export default router

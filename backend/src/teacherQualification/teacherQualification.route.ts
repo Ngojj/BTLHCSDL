@@ -1,22 +1,23 @@
 import { Router } from "express";
 import teacherQualificationController from "./teacherQualification.controller";
+import { asUser, asTeacher, bindIdentity } from "../middleware/auth";
 const router = Router()
 
 // get all teacherQualification
-router.get('/', teacherQualificationController.getAllTeacherQualification as any)
+router.get('/', asUser, teacherQualificationController.getAllTeacherQualification as any);
 
 // get qualification by userId
-router.get('/:userId', teacherQualificationController.getTeacherQualificationByUserId as any)
+router.get('/:userId', asUser, teacherQualificationController.getTeacherQualificationByUserId as any);
 
 // get qualification by teacher email
-router.get('/email/:email', teacherQualificationController.findTeacherQualificationByTeacherEmail as any)
+router.get('/email/:email', asUser, teacherQualificationController.findTeacherQualificationByTeacherEmail as any);
 
 // create qualification
-router.post('/create', teacherQualificationController.createTeacherQualification as any)
+router.post('/create', asTeacher, bindIdentity("userId"), teacherQualificationController.createTeacherQualification as any);
 
 // update qualification
-router.patch('/update', teacherQualificationController.updateTeacherQualification as any)
+router.patch('/update', asTeacher, bindIdentity("userId"), teacherQualificationController.updateTeacherQualification as any);
 
 // delete qualification
-router.delete('/delete', teacherQualificationController.deleteTeacherQualification as any)
+router.delete('/delete', asTeacher, bindIdentity("userId"), teacherQualificationController.deleteTeacherQualification as any);
 export default router;

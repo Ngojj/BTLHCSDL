@@ -1,13 +1,10 @@
-import { migrate } from "drizzle-orm/mysql2/migrator";
-import { db } from "../src/db/db";
-import path from "path";
+import { pool } from "../src/db/db";
+import { runMigrations } from "../src/db/migrate";
 
 async function main() {
   try {
-    await migrate(db, {
-      migrationsFolder: path.resolve("drizzle"),
-    });
-    console.log("Migrations completed!");
+    const ran = await runMigrations(pool, (message) => console.log(message));
+    console.log(ran.length ? "Migrations completed!" : "Database is up to date.");
     process.exit(0);
   } catch (err) {
     console.error("Migration failed!", err);

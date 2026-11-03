@@ -1,2 +1,12 @@
 /node_modules
 .env
+/dist
+# compiled output emitted next to sources by a bare `tsc`
+/index.js
+/drizzle.config.js
+/drizzle/*.js
+/src/**/*.js
+
+# local overrides (never commit)
+.env.*
+!.env.example

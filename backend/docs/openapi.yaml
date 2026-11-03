@@ -1,0 +1,347 @@
+openapi: 3.0.3
+info:
+  title: BK E-Learning API
+  version: 1.1.0
+  description: |
+    REST API of the Bách Khoa e-learning platform (courses, quizzes, roadmaps, payments).
+
+    **Auth** — log in at `POST /auth/login`, then send `Authorization: Bearer <token>`.
+    Roles are `student` and `teacher`. A teacher can only modify resources of their own courses;
+    a student can only read the lectures and quizzes of courses they are enrolled in.
+
+    **Errors** — every error is `{ "message": string, "details"?: [...] }`.
+servers:
+  - url: http://localhost:4000
+tags:
+  - name: Auth
+  - name: Courses
+  - name: Quizzes
+  - name: Payments
+  - name: Learning
+  - name: Certificates
+  - name: Analytics
+  - name: System
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Error:
+      type: object
+      required: [message]
+      properties:
+        message: { type: string }
+        details:
+          type: array
+          items:
+            type: object
+            properties:
+              path: { type: string }
+              message: { type: string }
+    CourseSummary:
+      type: object
+      properties:
+        courseId: { type: integer }
+        courseName: { type: string }
+        description: { type: string }
+        languege: { type: string, description: "Spelling kept for compatibility with the existing client DTO" }
+        creationTime: { type: string, format: date }
+        price: { type: integer, description: VND }
+        avgQuiz: { type: integer }
+        teacherId: { type: integer }
+        teacherFirstName: { type: string }
+        teacherLastName: { type: string }
+        students: { type: integer }
+    Pagination:
+      type: object
+      properties:
+        page: { type: integer }
+        limit: { type: integer }
+        total: { type: integer }
+        totalPages: { type: integer }
+    AttemptResult:
+      type: object
+      properties:
+        quizId: { type: integer }
+        attemptOrder: { type: integer }
+        score: { type: number, description: "0-10, two decimals" }
+        correct: { type: integer }
+        total: { type: integer }
+        remainingAttempts: { type: integer }
+  responses:
+    Unauthorized:
+      description: Missing or invalid token
+      content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
+    Forbidden:
+      description: Wrong role, not the owner, or not enrolled
+      content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
+    ValidationError:
+      description: Request body, params or query failed validation
+      content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
+paths:
+  /health:
+    get:
+      tags: [System]
+      summary: Liveness and database check
+      responses:
+        "200": { description: Service and database are up }
+        "503": { description: Database unreachable }
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Log in with username and password (rate limited)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username: { type: string }
+                password: { type: string, format: password }
+      responses:
+        "200":
+          description: JWT valid for one hour plus the user profile
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /course/search:
+    get:
+      tags: [Courses]
+      summary: Search the course catalog (public)
+      description: Matches name, description or teacher name. `popular` sorts by enrollments, `rating` by average quiz score.
+      parameters:
+        - { name: q, in: query, schema: { type: string, maxLength: 100 } }
+        - { name: language, in: query, schema: { type: string } }
+        - { name: teacherId, in: query, schema: { type: integer } }
+        - { name: minPrice, in: query, schema: { type: integer, minimum: 0 } }
+        - { name: maxPrice, in: query, schema: { type: integer, minimum: 0 } }
+        - name: sort
+          in: query
+          schema: { type: string, enum: [newest, popular, rating, price_asc, price_desc], default: newest }
+        - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 50, default: 12 } }
+      responses:
+        "200":
+          description: A page of courses
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { $ref: "#/components/schemas/CourseSummary" } }
+                  pagination: { $ref: "#/components/schemas/Pagination" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+  /course/create:
+    post:
+      tags: [Courses]
+      summary: Create a course (teacher). The teacher id is taken from the token.
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200": { description: Created }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /quiz/{quizId}/submit:
+    post:
+      tags: [Quizzes]
+      summary: Submit answers; the server grades them (student)
+      description: |
+        Runs in a single transaction. Fails with 409 when the quiz is closed, has no questions or the attempt
+        limit is reached, and with 403 when the student is not enrolled in the course.
+        Fill-in-the-blank answers ignore case and extra spaces.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: quizId, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [answers]
+              properties:
+                answers:
+                  type: object
+                  description: Map of questionId to the chosen / typed answer
+                  additionalProperties: { type: string }
+                  example: { "12": "3NF", "13": "primary key" }
+      responses:
+        "200":
+          description: Graded attempt
+          content: { application/json: { schema: { $ref: "#/components/schemas/AttemptResult" } } }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { description: Quiz closed, empty, or no attempts left }
+  /quiz/{quizId}/review:
+    get:
+      tags: [Quizzes]
+      summary: Review the latest attempt (student)
+      description: Correct answers are included only after the last allowed attempt has been used.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: quizId, in: path, required: true, schema: { type: integer } }
+      responses:
+        "200": { description: Per-question result of the latest attempt }
+        "404": { description: No attempt yet }
+  /payment/create-link:
+    post:
+      tags: [Payments]
+      summary: Start a PayOS checkout for a paid course (student)
+      description: The amount is read from the database, never from the request. Fails with 409 when already enrolled or when 3 courses are already in progress.
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [courseId]
+              properties:
+                courseId: { type: integer }
+      responses:
+        "200":
+          description: Checkout created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  checkoutUrl: { type: string }
+                  orderCode: { type: integer, format: int64 }
+        "409": { description: Already enrolled or at the 3-course limit }
+        "502": { description: Payment provider unavailable }
+  /payment/webhook:
+    post:
+      tags: [Payments]
+      summary: PayOS webhook (public, signature verified)
+      description: Enrolls the student exactly once, even if PayOS delivers the event several times or the status endpoint races with it.
+      responses:
+        "200": { description: Event accepted }
+        "400": { description: Invalid signature }
+  /payment/order/{orderCode}:
+    get:
+      tags: [Payments]
+      summary: Status of one of my orders (student)
+      description: When the order is still pending the server asks PayOS, so it works even without a public webhook URL.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: orderCode, in: path, required: true, schema: { type: integer, format: int64 } }
+      responses:
+        "200":
+          description: Order status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orderCode: { type: integer }
+                  courseId: { type: integer }
+                  amount: { type: integer }
+                  status: { type: string, enum: [PENDING, PAID, CANCELLED, EXPIRED, ENROLL_FAILED] }
+        "404": { description: Not found or not yours }
+  /analytics/teacher/overview:
+    get:
+      tags: [Analytics]
+      summary: Dashboard figures for the logged-in teacher
+      description: |
+        Aggregated in SQL — recursive CTE for a gap-free month series, `LAG()` for month-over-month growth,
+        `RANK()` to rank courses by revenue.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: months, in: query, schema: { type: integer, minimum: 1, maximum: 36, default: 12 } }
+      responses:
+        "200": { description: Totals, revenue by month, per-course stats, score and progress distributions, recent activity }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /progress/course/{courseId}:
+    get:
+      tags: [Learning]
+      summary: Outline of an enrolled course with my progress and the next step (student)
+      description: |
+        Progress counts every lecture and every quiz equally: a lecture is done when its player reports it finished,
+        a quiz when attempted. `next` is the first undone item in course order (a section's lectures, then its quiz).
+        `certificate` is set once the course is finished with an average quiz score of at least `passGpa`.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: courseId, in: path, required: true, schema: { type: integer } }
+      responses:
+        "200": { description: Progress, per-section lectures and quizzes, next step, certificate }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /progress/lecture/{lectureId}:
+    put:
+      tags: [Learning]
+      summary: Report the playback position and, once, that the lecture is finished (student)
+      description: |
+        Call every few seconds with `completed: false` to remember where the student stopped (resume playback),
+        and once with `completed: true`. Only the first completion recomputes the course progress and may issue the
+        certificate; the response then includes `course`. Completion is reported by the player, so like most LMSs it
+        trusts the client.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: lectureId, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [positionSeconds]
+              properties:
+                positionSeconds: { type: integer, minimum: 0, maximum: 172800 }
+                completed: { type: boolean, default: false }
+      responses:
+        "200": { description: Saved }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { description: Lecture not found }
+  /certificate/verify/{code}:
+    get:
+      tags: [Certificates]
+      summary: Check that a certificate is genuine (public, rate limited)
+      description: The code looks like `BK-XXXX-XXXX-XXXX` and is printed on the PDF and behind its QR code. Case-insensitive.
+      parameters:
+        - { name: code, in: path, required: true, schema: { type: string, example: BK-7K2M-QX9R-4TWB } }
+      responses:
+        "200":
+          description: Genuine certificate
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid: { type: boolean }
+                  certificate:
+                    type: object
+                    properties:
+                      code: { type: string }
+                      courseName: { type: string }
+                      studentName: { type: string }
+                      teacherName: { type: string }
+                      issuedAt: { type: string, format: date }
+                      grade: { type: number, nullable: true }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "404": { description: No such certificate }
+  /certificate/mine:
+    get:
+      tags: [Certificates]
+      summary: My certificates (student)
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200": { description: List of certificates }
+  /certificate/issued:
+    get:
+      tags: [Certificates]
+      summary: Certificates issued for my courses (teacher)
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200": { description: List of certificates with the holder's name }
+  /certificate/{code}/pdf:
+    get:
+      tags: [Certificates]
+      summary: Download the certificate as an A4 PDF with a QR code (holder only)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: code, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: PDF
+          content: { application/pdf: { schema: { type: string, format: binary } } }
+        "404": { description: Not found, or not yours }

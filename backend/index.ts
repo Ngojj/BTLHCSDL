@@ -1,87 +1,38 @@
-import express, { Express, Request, Response } from "express";
-import dotenv from "dotenv";
 import { createServer } from "http";
-import userRoutes from "./src/user/user.route"
-import authRoutes from "./src/auth/auth.route"
-import teacherRoutes from "./src/teacher/teacher.route"
-import studentRoutes from "./src/student/student.route"
-import courseRoutes from "./src/course/course.route"
+import { createApp } from "./src/app";
+import { env } from "./src/config/env";
+import { pool } from "./src/db/db";
+import { runMigrations } from "./src/db/migrate";
+import { logger } from "./src/lib/logger";
 
-import cors from "cors";
-
-import teacherQualificationRoutes from "./src/teacherQualification/teacherQualification.route";
-import courseTopicRoutes from "./src/courseTopic/courseTopic.route";
-import sectionRoutes from "./src/section/section.route";
-import quizRoutes from "./src/quiz/quiz.route";
-import questionRoutes from "./src/question/question.route";
-import optionRoutes from "./src/option/option.route";
-import roadMapRoutes from "./src/roadMap/roadMap.route";
-import requireCourseRoutes from "./src/requireCourse/requireCourse.route";
-import certificationRoutes from "./src/certification/certification.route";
-import joinRoutes from "./src/join/join.route";
-import dORoutes from "./src/dO/dO.route";
-import answerRecordRoutes from "./src/answerRecord/answerRecord.route";
-import lectureRoutes from "./src/lecture/lecture.route";
-import interactRoutes from "./src/interact/interact.route"; 
-import includeCourseRoutes from "./src/includeCourse/includeCourse.route";
-import viewRoadMapRoutes from "./src/viewRoadMap/viewRoadMap.route";
-import paymentRoutes from "./src/payment/payment.route";
-dotenv.config();
-
-const app: Express = express();
-const port = process.env.PORT || 4000;
-const allowedOrigins = (process.env.CORS_ORIGIN || "")
-  .split(",")
-  .map((origin) => origin.trim())
-  .filter(Boolean);
-
-if (!process.env.TOKEN_SECRET) {
-  throw new Error("Missing TOKEN_SECRET in backend .env");
+if (env.TOKEN_SECRET.length < 16) {
+  logger.warn("TOKEN_SECRET is shorter than 16 characters; use a long random value in production");
 }
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      console.log("Request from origin:", origin);
-      if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
-        callback(null, true);
-        return;
-      }
-      callback(null, true); // Temporarily allow all for dev
-    },
-  })
-);
-app.use(express.json())
+const server = createServer(createApp());
 
-app.get('/', (req: Request, res: Response) => {
-  res.json({ message: 'Backend API is running' });
+const start = async () => {
+  if (env.RUN_MIGRATIONS === "true") {
+    const applied = await runMigrations(pool, (message) => logger.info(`migration: ${message}`));
+    logger.info(applied.length ? `${applied.length} migration(s) applied` : "database schema is up to date");
+  }
+  server.listen(env.PORT, () => {
+    logger.info(`Server is running at http://localhost:${env.PORT} (docs: /docs)`);
+  });
+};
+
+start().catch((error) => {
+  logger.fatal({ err: error }, "failed to start");
+  process.exit(1);
 });
 
-app.use('/user',userRoutes)
-app.use('/student', studentRoutes)
-app.use('/teacher', teacherRoutes)
-app.use('/auth', authRoutes)
-app.use('/course', courseRoutes)
-app.use('/teacherQualification', teacherQualificationRoutes)
-app.use('/courseTopic', courseTopicRoutes)
-app.use('/section', sectionRoutes)
-app.use('/quiz', quizRoutes)
-app.use('/question', questionRoutes)
-app.use('/option', optionRoutes)
-app.use('/roadMap', roadMapRoutes)
-app.use('/requireCourse', requireCourseRoutes)
-app.use('/certification', certificationRoutes)
-app.use('/join', joinRoutes)
-app.use('/dO', dORoutes)
-app.use('/answerRecord', answerRecordRoutes)
-app.use('/lecture', lectureRoutes)
-app.use('/interact', interactRoutes)
-app.use('/includeCourse', includeCourseRoutes)
-app.use('/viewRoadMap', viewRoadMapRoutes)
-app.use('/payment', paymentRoutes)
-const server = createServer(app)
-
-
-server.listen(port, () => {
-  console.log(`[server]: Server is running at http://localhost:${port}`);
-});
+const shutdown = (signal: string) => {
+  logger.info(`${signal} received, shutting down`);
+  server.close(async () => {
+    await pool.end();
+    process.exit(0);
+  });
+  setTimeout(() => process.exit(1), 10_000).unref();
+};
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));

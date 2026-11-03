@@ -2,10 +2,13 @@ import { sql } from "drizzle-orm";
 import {
   mysqlTable,
   int,
+  bigint,
   varchar,
   text,
   date,
   double,
+  timestamp,
+  index,
   primaryKey,
 } from "drizzle-orm/mysql-core";
 
@@ -193,6 +196,9 @@ export const certification = mysqlTable("certification", {
   expDate: date("expDate"),
   courseId: int("courseId").notNull().references(() => course.id, { onDelete: "cascade" }),
   studentId: int("studentId").notNull().references(() => student.userId, { onDelete: "cascade" }),
+  // public verification code (BK-XXXX-XXXX-XXXX) and the GPA the certificate was issued with
+  code: varchar("code", { length: 20 }).unique(),
+  grade: double("grade"),
 });
 
 /* ============= JOIN ============= */
@@ -212,6 +218,28 @@ export const join = mysqlTable(
       columns: [table.courseId, table.studentId],
       name: "pk_join",
     }),
+    byStart: index("idx_join_dateStart").on(table.dateStart),
+  })
+);
+
+/* ============= PAYMENT ============= */
+
+// One row per PayOS checkout. Enrollment is only ever created from a PAID row.
+export const payment = mysqlTable(
+  "payment",
+  {
+    orderCode: bigint("orderCode", { mode: "number" }).primaryKey(),
+    studentId: int("studentId").notNull().references(() => student.userId, { onDelete: "cascade" }),
+    courseId: int("courseId").notNull().references(() => course.id, { onDelete: "cascade" }),
+    amount: int("amount").notNull(),
+    // PENDING | PAID | CANCELLED | EXPIRED | ENROLL_FAILED (paid but enrollment rejected -> needs refund)
+    status: varchar("status", { length: 20 }).notNull().default("PENDING"),
+    checkoutUrl: varchar("checkoutUrl", { length: 512 }),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    paidAt: timestamp("paidAt"),
+  },
+  (table) => ({
+    byStudentCourse: index("idx_payment_student_course").on(table.studentId, table.courseId),
   })
 );
 
@@ -269,6 +297,10 @@ export const interact = mysqlTable(
   {
     lectureId: int("lectureId").notNull().references(() => lecture.id, { onDelete: "cascade" }),
     studentId: int("studentId").notNull().references(() => student.userId, { onDelete: "cascade" }),
+    // where the student stopped watching, and when they finished the lecture (null = not finished)
+    positionSeconds: int("positionSeconds").notNull().default(0),
+    completedAt: timestamp("completedAt"),
+    updatedAt: timestamp("updatedAt").notNull().defaultNow().onUpdateNow(),
   },
   (table) => ({
     pk: primaryKey({

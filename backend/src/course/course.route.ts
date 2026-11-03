@@ -1,29 +1,30 @@
 import { Router } from "express";
+import { asyncHandler } from "../lib/errors";
+import { validate } from "../middleware/validate";
+import { searchCourses, searchQuerySchema } from "./course.search";
 import courseController from "./course.controller";
-import { course } from "../db/schema";
+import { asUser, asTeacher, bindIdentity } from "../middleware/auth";
+import { owns } from "../middleware/access";
 const router = Router();
 
 //  get all courses
-router.get('/', courseController.getAllCourses as any)
+router.get('/', courseController.getAllCourses as any);
+// search the catalog: ?q=&language=&minPrice=&maxPrice=&teacherId=&sort=newest|popular|rating|price_asc|price_desc&page=&limit=
+router.get("/search", validate({ query: searchQuerySchema }), asyncHandler(async (req, res) => {
+    res.json(await searchCourses(req.query as any));
+}));
 // get all courses with teacher info
-router.get('/teacher', courseController.getAllCourseWithTeacherInfo as any)
-// debug: get all courses (raw data)
-router.get('/debug', courseController.debugAllCourses as any)
-router.get('/teacher/')
+router.get('/teacher', courseController.getAllCourseWithTeacherInfo as any);
 // get all courses by teacher id
-router.get('/teacherId/:teacherId', courseController.getAllCourseByTeacherId as any)
+router.get('/teacherId/:teacherId', asUser, courseController.getAllCourseByTeacherId as any);
 // get course by id
-router.get('/id/:id', courseController.getCourseById as any)
+router.get('/id/:id', courseController.getCourseById as any);
 // get course by name
-router.get('/name/:name', courseController.getCourseByName as any)
+router.get('/name/:name', courseController.getCourseByName as any);
 // create new course
-router.post('/create', courseController.createNewCourse as any)
+router.post('/create', asTeacher, bindIdentity("teacherId"), courseController.createNewCourse as any);
 // delete course by id
-router.delete('/delete/id/:id', courseController.deleteCourseById as any)
-// delete course by name
-router.delete('/delete/name/:name', courseController.deleteCourseByName as any)
+router.delete('/delete/id/:id', asTeacher, owns("course", "params.id"), courseController.deleteCourseById as any);
 // update course by id
-router.put('/update/id/:id', courseController.updateCourseById as any)
-// update course by name
-router.put('/update/name/:name', courseController.updateCourseByName as any)
+router.put('/update/id/:id', asTeacher, owns("course", "params.id"), courseController.updateCourseById as any);
 export default router
