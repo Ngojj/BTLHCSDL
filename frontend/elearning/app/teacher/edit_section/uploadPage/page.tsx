@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import CreateFile from './createFile';
+import { uploadFile } from '@/lib/upload-image';
 
 export default function AvatarUploadPage() {
   const inputFileRef = useRef<HTMLInputElement>(null);
@@ -29,11 +29,7 @@ export default function AvatarUploadPage() {
     }
 
     try {
-      // Convert the file to a Blob or Base64 string
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const result = await CreateFile(formData);
+      const result = await uploadFile(file);
       setUploadUrl(result);
       setErrorMessage(null);
     } catch (error) {

@@ -51,6 +51,16 @@ describe("authentication", () => {
     expect((await api().get("/join/teacherId/1").set(bearer(jwt.sign(claims, "another-secret-value-123456")))).status).toBe(401);
   });
 
+  it("tells other services who a token belongs to, and only for a valid token", async () => {
+    const teacher = await register("teacher");
+    const me = await api().get("/auth/me").set(bearer(teacher.token));
+    expect(me.status).toBe(200);
+    expect(me.body).toMatchObject({ id: teacher.id, role: "teacher" });
+    expect(JSON.stringify(me.body)).not.toMatch(/password/i);
+    expect((await api().get("/auth/me")).status).toBe(401);
+    expect((await api().get("/auth/me").set(bearer("garbage"))).status).toBe(401);
+  });
+
   it("validates registration input and rejects duplicate usernames", async () => {
     const weak = await api().post("/auth/register-as-student").send({ username: "ab", password: "short" });
     expect(weak.status).toBe(400);

@@ -2,6 +2,7 @@ import { Router } from "express";
 import rateLimit from "express-rate-limit";
 import { z } from "zod";
 import { env } from "../config/env";
+import { authenticate } from "../middleware/auth";
 import { validate } from "../middleware/validate";
 import authController from "./auth.controller";
 import studentController from "../student/student.controller";
@@ -34,6 +35,12 @@ const loginSchema = z.object({ username: z.string().min(1).max(64), password: z.
 const googleSchema = z.object({
   token: z.string().min(1),
   role: z.string().default("student").transform((r) => r.toLowerCase()).pipe(z.enum(["student", "teacher"])),
+});
+
+// Who is this token? Lets other services (e.g. the frontend's upload route) ask this API instead of sharing the JWT secret.
+router.get("/me", authenticate, (req, res) => {
+  const { sub, role, firstName, lastName, email } = req.user!;
+  res.json({ id: sub, role, firstName, lastName, email });
 });
 
 router.post("/login", credentialsLimiter, validate({ body: loginSchema }), authController.login as any);
