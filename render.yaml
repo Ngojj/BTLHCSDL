@@ -28,3 +28,9 @@ services:
         sync: false
       - key: CORS_ORIGIN
         value: "*"
+      - key: FRONTEND_URL
+        sync: false
+      - key: DATABASE_SSL
+        sync: false
+      - key: RUN_MIGRATIONS
+        sync: false
